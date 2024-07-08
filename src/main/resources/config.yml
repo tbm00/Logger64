@@ -1,0 +1,11 @@
+database:
+  host: 'host'
+  port: '3306'
+  database: 'db'
+  username: 'user'
+  password: 'pass'
+  options: '?autoReconnect=true'
+
+logger:
+  enabled: true
+  ticksUntilPlayerAuthorized: 36000

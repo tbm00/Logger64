@@ -1,0 +1,13 @@
+name: Logger64
+version: ${project.version}
+description: This plugin logs players' connection info
+author: tbm00
+main: dev.tbm00.spigot.logger64.Logger64
+api-version: 1.17
+commands:
+  logger:
+    description: Logger64 base command
+permissions:
+  logger64.admin:
+    description: Ability to use logger command
+    default: op
