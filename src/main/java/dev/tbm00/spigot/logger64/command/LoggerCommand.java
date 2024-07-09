@@ -12,24 +12,15 @@ import org.bukkit.entity.Player;
 
 import dev.tbm00.spigot.logger64.LogManager;
 import dev.tbm00.spigot.logger64.model.PlayerEntry;
-import dev.tbm00.spigot.logger64.model.LogEntry;
+import dev.tbm00.spigot.logger64.model.IPEntry;
 
 public class LoggerCommand implements TabExecutor {
     private final LogManager logManager;
-    private final String[] subCommands = new String[]{"mod", "show", "deleterepsby", "deleterepson", "delete", "reset", "reload"};
-    private final String[] subSubSubCommands = new String[]{"show", "<#>"};
-    private final String prefix = ChatColor.DARK_GRAY + "[" + ChatColor.WHITE + "Rep" + ChatColor.DARK_GRAY + "] " + ChatColor.RESET;
-    private final double maxModifier;
-    private final double minModifier;
-    private final double maxModifierInt;
-    private final double minModifierInt;
+    private final String[] subCommands = new String[]{"seen", "chart"};
+    private final String prefix = ChatColor.DARK_GRAY + "[" + ChatColor.WHITE + "Logger" + ChatColor.DARK_GRAY + "] " + ChatColor.RESET;
 
-    public LoggerCommand(LogManager logManager, FileConfiguration fileConfig) {
+    public LoggerCommand(LogManager logManager) {
         this.logManager = logManager;
-        this.maxModifier = fileConfig.getInt("repScoring.maxModifier");
-        this.minModifier = fileConfig.getInt("repScoring.minModifier");
-        this.maxModifierInt = fileConfig.getInt("repScoring.maxModifier");
-        this.minModifierInt = fileConfig.getInt("repScoring.minModifier");
     }
 
     @Override
@@ -154,7 +145,7 @@ public class LoggerCommand implements TabExecutor {
         }
         String initiator = args[1];
         String receiver = args[2];
-        LogEntry targetRepEntry = logManager.getRepEntry(logManager.getPlayerUUID(initiator), logManager.getPlayerUUID(receiver));
+        IPEntry targetRepEntry = logManager.getRepEntry(logManager.getPlayerUUID(initiator), logManager.getPlayerUUID(receiver));
         if (targetRepEntry == null) {
             sender.sendMessage(prefix + ChatColor.RED + "RepEntry not found.");
             return false;

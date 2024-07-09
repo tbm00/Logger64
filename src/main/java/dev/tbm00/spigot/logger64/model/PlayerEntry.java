@@ -1,112 +1,73 @@
 package dev.tbm00.spigot.logger64.model;
 
 import java.util.Date;
+import java.util.List;
 
 public class PlayerEntry {
 
-    private String playerUUID;
-    private String playerUsername;
-    private double repAverage;
-    private double repAverageLast;
-    private int repStaffModifier;
-    private double repShown;
-    private double repShownLast;
-    private int repCount;
-    private Date lastLogin;
-    private Date lastLogout;
+    private String username;
+    private List<String> knownIPs;
+    private String firstIP;
+    private String latestIP;
+    private Date firstDate;
+    private Date latestDate;
 
-    public PlayerEntry(String playerUUID, String playerUsername,
-                double repAverage, double repAverageLast, int repStaffModifier, double repShown, double repShownLast, int repCount,
-                Date lastLogin, Date lastLogout) {
-        this.playerUUID = playerUUID;
-        this.playerUsername = playerUsername;
-        this.repAverage = repAverage;
-        this.repAverageLast = repAverageLast;
-        this.repStaffModifier = repStaffModifier;
-        this.repShown = repShown;
-        this.repShownLast = repShownLast;
-        this.repCount = repCount;
-        this.lastLogin = lastLogin;
-        this.lastLogout = lastLogout;
+    public PlayerEntry(String username, List<String> knownIPs, 
+                        String firstIP, String latestIP,
+                        Date firstDate, Date latestDate) {
+        this.username = username;
+        this.knownIPs = knownIPs;
+        this.firstIP = firstIP;
+        this.latestIP = latestIP;
+        this.firstDate = firstDate;
+        this.latestDate = latestDate;
     }
 
-    public String getPlayerUUID() {
-        return playerUUID;
+    public String getUsername() {
+        return username;
     }
 
-    public void setPlayerUUID(String playerUUID) {
-        this.playerUUID = playerUUID;
+    public List<String> getKnownIPs() {
+        return knownIPs;
     }
 
-    public String getPlayerUsername() {
-        return playerUsername;
+    public String getFirstIP() {
+        return firstIP;
     }
 
-    public void setPlayerUsername(String playerUsername) {
-        this.playerUsername = playerUsername;
+    public String getLatestIP() {
+        return latestIP;
     }
 
-    public double getRepAverage() {
-        return repAverage;
+    public Date getFirstDate() {
+        return firstDate;
     }
 
-    public void setRepAverage(double repAverage) {
-        this.repAverage = repAverage;
+    public Date getLatestDate() {
+        return latestDate;
     }
 
-    public double getRepAverageLast() {
-        return repAverageLast;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
-    public void setRepAverageLast(double repAverageLast) {
-        this.repAverageLast = repAverageLast;
+    public void setKnownIPs(List<String> knownIPs) {
+        this.knownIPs = knownIPs;
     }
 
-    public int getRepStaffModifier() {
-        return repStaffModifier;
+    public void setFirstIP(String firstIP) {
+        this.firstIP = firstIP;
     }
 
-    public void setRepStaffModifier(int repStaffModifier) {
-        this.repStaffModifier = repStaffModifier;
+    public void setLatestIP(String latestIP) {
+        this.latestIP = latestIP;
     }
 
-    public double getRepShown() {
-        return repShown;
+    public void setFirstDate(Date firstDate) {
+        this.firstDate = firstDate;
     }
 
-    public void setRepShown(double repShown) {
-        this.repShown = repShown;
-    }
-
-    public double getRepShownLast() {
-        return repShownLast;
-    }
-
-    public void setRepShownLast(double repShownLast) {
-        this.repShownLast = repShownLast;
-    }
-
-    public int getRepCount() {
-        return repCount;
-    }
-
-    public void setRepCount(int repCount) {
-        this.repCount = repCount;
-    }
-
-    public Date getLastLogin() {
-        return lastLogin;
-    }
-
-    public void setLastLogin(Date lastLogin) {
-        this.lastLogin = lastLogin;
-    }
-
-    public Date getLastLogout() {
-        return lastLogout;
-    }
-
-    public void setLastLogout(Date lastLogout) {
-        this.lastLogout = lastLogout;
+    public void setLatestDate(Date latestDate) {
+        this.latestDate = latestDate;
     }
 }

@@ -8,4 +8,8 @@ database:
 
 logger:
   enabled: true
-  ticksUntilPlayerAuthorized: 36000
+  ticksUntilConnectionLogged: 6000
+  nonLoggedIPs:
+  - 0.0.0.0
+  - 255.255.255.255
+  # Add more entries as needed.

@@ -1,7 +1,6 @@
 package dev.tbm00.spigot.logger64;
 
 import org.bukkit.ChatColor;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -12,7 +11,7 @@ import dev.tbm00.spigot.logger64.listener.PlayerJoinLeave;
 public class Logger64 extends JavaPlugin {
 
     private MySQLConnection mysqlConnection;
-    private LogManager repManager;
+    private LogManager logManager;
 
     @Override
     public void onEnable() {
@@ -26,19 +25,18 @@ public class Logger64 extends JavaPlugin {
 
         // Load Config
         this.saveDefaultConfig();
-        FileConfiguration fileConfig = this.getConfig();
 
         // Connect to MySQL
-        this.mysqlConnection = new MySQLConnection(fileConfig);
+        this.mysqlConnection = new MySQLConnection(this);
 
         // Connect RepManager
-        this.repManager = new LogManager(this.mysqlConnection, fileConfig);
+        this.logManager = new LogManager(this.mysqlConnection);
 
         // Register Listener
-        getServer().getPluginManager().registerEvents(new PlayerJoinLeave(this.repManager), this);
+        getServer().getPluginManager().registerEvents(new PlayerJoinLeave(this, this.logManager), this);
 
         // Register Commands
-        getCommand("repadmin").setExecutor(new LoggerCommand(this.repManager, fileConfig));
+        getCommand("repadmin").setExecutor(new LoggerCommand(this.logManager));
     }
 
     @Override
@@ -50,8 +48,8 @@ public class Logger64 extends JavaPlugin {
         return mysqlConnection;
     }
 
-    public LogManager getRepManager() {
-        return repManager;
+    public LogManager getLogManager() {
+        return logManager;
     }
 
     private void log(String... strings) {
