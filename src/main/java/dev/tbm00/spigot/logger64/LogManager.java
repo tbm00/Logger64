@@ -2,6 +2,7 @@ package dev.tbm00.spigot.logger64;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import java.sql.*;
 
 import dev.tbm00.spigot.logger64.data.MySQLConnection;
@@ -12,11 +13,11 @@ public class LogManager {
 
     private final MySQLConnection db;
 
-    public LogManager(MySQLConnection database) {
-        this.db = database;
+    public LogManager(MySQLConnection db) {
+        this.db = db;
     }
 
-    public void reload() {
+    public void reloadConnection() {
         // reload MySQL connection
         db.closeConnection();
         db.openConnection();
@@ -25,10 +26,10 @@ public class LogManager {
     // returns player entry from sql
     // if not found, returns null
     public PlayerEntry getPlayerEntry(String username) {
-        try (Connection conn = db.getConnection();
-             PreparedStatement stmt = conn.prepareStatement("SELECT * FROM logger64_players WHERE username = ?")) {
-            stmt.setString(1, username);
-            try (ResultSet rs = stmt.executeQuery()) {
+        try (PreparedStatement statement = db.getConnection()
+        .prepareStatement("SELECT * FROM logger64_players WHERE username = ?")) {
+            statement.setString(1, username);
+            try (ResultSet rs = statement.executeQuery()) {
                 if (rs.next()) {
                     String knownIPs = rs.getString("known_ips");
                     String firstIP = rs.getString("first_ip");
@@ -48,36 +49,35 @@ public class LogManager {
     // creates player entry in sql if DNE
     // updates player entry in sql if it does exist
     public void savePlayerEntry(PlayerEntry playerEntry, String ip, String username, java.util.Date date) {
-        try (Connection conn = db.getConnection()) {
-            String query;
-            boolean exists = getPlayerEntry(username) != null;
-            if (exists) {
-                query = "UPDATE logger64_players SET known_ips = ?, latest_ip = ?, latest_date = ? WHERE username = ?";
-            } else {
-                query = "INSERT INTO logger64_players (username, known_ips, first_ip, latest_ip, first_date, latest_date) VALUES (?, ?, ?, ?, ?, ?)";
-            }
+        String query;
+        boolean exists = getPlayerEntry(username) != null;
+        if (exists) {
+            query = "UPDATE logger64_players SET known_ips = ?, latest_ip = ?, latest_date = ? WHERE username = ?";
+        } else {
+            query = "INSERT INTO logger64_players (username, known_ips, first_ip, latest_ip, first_date, latest_date) VALUES (?, ?, ?, ?, ?, ?)";
+        }
 
-            try (PreparedStatement stmt = conn.prepareStatement(query)) {
-                if (exists) {
-                    List<String> knownIPs = new ArrayList<>(playerEntry.getKnownIPs());
-                    if (!knownIPs.contains(ip)) {
-                        knownIPs.add(ip);
-                    }
-                    stmt.setString(1, String.join(",", knownIPs));
-                    stmt.setString(2, ip);
-                    stmt.setDate(3, new java.sql.Date(date.getTime()));
-                    stmt.setString(4, username);
-                } else {
-                    stmt.setString(1, username);
-                    stmt.setString(2, ip);
-                    stmt.setString(3, ip);
-                    stmt.setString(4, ip);
-                    stmt.setDate(5, new java.sql.Date(date.getTime()));
-                    stmt.setDate(6, new java.sql.Date(date.getTime()));
+        try (PreparedStatement statement = db.getConnection().prepareStatement(query)) {
+            if (exists) {
+                List<String> knownIPs = new ArrayList<>(playerEntry.getKnownIPs());
+                if (!knownIPs.contains(ip)) {
+                    knownIPs.add(ip);
                 }
-                stmt.executeUpdate();
+                statement.setString(1, String.join(",", knownIPs));
+                statement.setString(2, ip);
+                statement.setDate(3, new java.sql.Date(date.getTime()));
+                statement.setString(4, username);
+            } else {
+                statement.setString(1, username);
+                statement.setString(2, ip);
+                statement.setString(3, ip);
+                statement.setString(4, ip);
+                statement.setDate(5, new java.sql.Date(date.getTime()));
+                statement.setDate(6, new java.sql.Date(date.getTime()));
             }
+            statement.executeUpdate();
         } catch (SQLException e) {
+            System.out.println("Exception: Could not save player entry to SQL!");
             e.printStackTrace();
         }
     }
@@ -95,10 +95,10 @@ public class LogManager {
     // returns ip entry from sql
     // if not found, returns null
     public IPEntry getIPEntry(String ip) {
-        try (Connection conn = db.getConnection();
-             PreparedStatement stmt = conn.prepareStatement("SELECT * FROM logger64_ips WHERE ip = ?")) {
-            stmt.setString(1, ip);
-            try (ResultSet rs = stmt.executeQuery()) {
+        try (PreparedStatement statement = db.getConnection()
+        .prepareStatement("SELECT * FROM logger64_ips WHERE ip = ?")) {
+            statement.setString(1, ip);
+            try (ResultSet rs = statement.executeQuery()) {
                 if (rs.next()) {
                     String knownUsernames = rs.getString("known_usernames");
                     String firstUsername = rs.getString("first_username");
@@ -118,35 +118,33 @@ public class LogManager {
     // creates ip entry in sql if DNE
     // updates ip entry in sql if it does exist
     public void saveIPEntry(IPEntry ipEntry, String ip, String username, java.util.Date date) {
-        try (Connection conn = db.getConnection()) {
-            String query;
-            boolean exists = getIPEntry(ip) != null;
+        String query;
+        boolean exists = getIPEntry(ip) != null;
+        if (exists) {
+            query = "UPDATE logger64_ips SET known_usernames = ?, latest_username = ?, latest_date = ? WHERE ip = ?";
+        } else {
+            query = "INSERT INTO logger64_ips (ip, known_usernames, first_username, latest_username, first_date, latest_date) VALUES (?, ?, ?, ?, ?, ?)";
+        }
+        
+        try (PreparedStatement statement = db.getConnection().prepareStatement(query)) {
             if (exists) {
-                query = "UPDATE logger64_ips SET known_usernames = ?, latest_username = ?, latest_date = ? WHERE ip = ?";
-            } else {
-                query = "INSERT INTO logger64_ips (ip, known_usernames, first_username, latest_username, first_date, latest_date) VALUES (?, ?, ?, ?, ?, ?)";
-            }
-
-            try (PreparedStatement stmt = conn.prepareStatement(query)) {
-                if (exists) {
-                    List<String> knownUsernames = new ArrayList<>(ipEntry.getKnownUsernames());
-                    if (!knownUsernames.contains(username)) {
-                        knownUsernames.add(username);
-                    }
-                    stmt.setString(1, String.join(",", knownUsernames));
-                    stmt.setString(2, username);
-                    stmt.setDate(3, new java.sql.Date(date.getTime()));
-                    stmt.setString(4, ip);
-                } else {
-                    stmt.setString(1, ip);
-                    stmt.setString(2, username);
-                    stmt.setString(3, username);
-                    stmt.setString(4, username);
-                    stmt.setDate(5, new java.sql.Date(date.getTime()));
-                    stmt.setDate(6, new java.sql.Date(date.getTime()));
+                List<String> knownUsernames = new ArrayList<>(ipEntry.getKnownUsernames());
+                if (!knownUsernames.contains(username)) {
+                    knownUsernames.add(username);
                 }
-                stmt.executeUpdate();
+                statement.setString(1, String.join(",", knownUsernames));
+                statement.setString(2, username);
+                statement.setDate(3, new java.sql.Date(date.getTime()));
+                statement.setString(4, ip);
+            } else {
+                statement.setString(1, ip);
+                statement.setString(2, username);
+                statement.setString(3, username);
+                statement.setString(4, username);
+                statement.setDate(5, new java.sql.Date(date.getTime()));
+                statement.setDate(6, new java.sql.Date(date.getTime()));
             }
+            statement.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }

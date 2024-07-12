@@ -29,14 +29,14 @@ public class Logger64 extends JavaPlugin {
         // Connect to MySQL
         this.mysqlConnection = new MySQLConnection(this);
 
-        // Connect RepManager
+        // Connect LogManager
         this.logManager = new LogManager(this.mysqlConnection);
 
         // Register Listener
-        getServer().getPluginManager().registerEvents(new PlayerJoinLeave(this, this.logManager), this);
+        getServer().getPluginManager().registerEvents(new PlayerJoinLeave(this, this.logManager, this.mysqlConnection), this);
 
         // Register Commands
-        getCommand("repadmin").setExecutor(new LoggerCommand(this.logManager));
+        getCommand("logger").setExecutor(new LoggerCommand(this.logManager));
     }
 
     @Override

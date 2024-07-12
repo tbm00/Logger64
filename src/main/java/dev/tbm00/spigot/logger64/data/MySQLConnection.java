@@ -15,7 +15,7 @@ public class MySQLConnection {
         initializeDatabase();
     }
 
-    public void openConnection() {
+    public synchronized void openConnection() {
         try {
             String host = javaPlugin.getConfig().getString("database.host");
             String port = javaPlugin.getConfig().getString("database.port");
@@ -24,23 +24,23 @@ public class MySQLConnection {
             String password = javaPlugin.getConfig().getString("database.password");
             String options = javaPlugin.getConfig().getString("database.options");
             this.connection = DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/" + database + options, username, password);
-            System.out.println("Connected to MySQL database!");
+            System.out.println("Connected MySQL database!");
         } catch (SQLException e) {
             System.out.println("Exception: Could not connect to the database...");
             e.printStackTrace();
         }
-
     }
 
-    public Connection getConnection() {
+    public synchronized Connection getConnection() {
+        //openConnection();
         return this.connection;
     }
 
-    public void closeConnection() {
+    public synchronized void closeConnection() {
         if (this.connection != null) {
             try {
                 this.connection.close();
-                System.out.println("Disconnected from database.");
+                System.out.println("Disconnected database!");
             } catch (SQLException e) {
                 System.out.println("Exception: Could not close the database connection...");
                 e.printStackTrace();
@@ -54,6 +54,7 @@ public class MySQLConnection {
             String ipTable = "CREATE TABLE IF NOT EXISTS logger64_ips (ip VARCHAR(45) PRIMARY KEY, known_usernames TEXT, first_username VARCHAR(20), latest_username VARCHAR(20), first_date DATE, latest_date DATE)";
             statement.execute(playerTable);
             statement.execute(ipTable);
+            System.out.println("Initialized database!");
         } catch (SQLException e) {
             System.out.println("Exception: Could not initialize the database...");
             e.printStackTrace();

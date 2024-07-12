@@ -9,5 +9,8 @@ commands:
     description: Logger64 base command
 permissions:
   logger64.admin:
-    description: Ability to use logger command
+    description: Ability to use table commands
+    default: op
+  logger64.seen:
+    description: Ability to use seen command
     default: op

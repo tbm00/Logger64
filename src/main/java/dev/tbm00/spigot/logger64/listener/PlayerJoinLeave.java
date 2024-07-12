@@ -13,6 +13,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
+import dev.tbm00.spigot.logger64.data.MySQLConnection;
 import dev.tbm00.spigot.logger64.LogManager;
 import dev.tbm00.spigot.logger64.model.PlayerEntry;
 import dev.tbm00.spigot.logger64.model.IPEntry;
@@ -21,10 +22,12 @@ public class PlayerJoinLeave implements Listener {
     private JavaPlugin javaPlugin;
     private final LogManager logManager;
     private Map<String, BukkitTask> pendingTasks = new HashMap<>();
+    private MySQLConnection db;
 
-    public PlayerJoinLeave(JavaPlugin javaPlugin, LogManager logManager) {
+    public PlayerJoinLeave(JavaPlugin javaPlugin, LogManager logManager, MySQLConnection db) {
         this.javaPlugin = javaPlugin;
         this.logManager = logManager;
+        this.db = db;
     }
 
     @EventHandler
@@ -42,6 +45,8 @@ public class PlayerJoinLeave implements Listener {
         BukkitTask task = new BukkitRunnable() {
             @Override
             public void run() {
+                db.openConnection();
+
                 PlayerEntry playerEntry = logManager.getPlayerEntry(username);
                 IPEntry ipEntry = logManager.getIPEntry(ip);
                 Date date = new Date();
@@ -51,7 +56,7 @@ public class PlayerJoinLeave implements Listener {
 
                 pendingTasks.remove(username);
             }
-        }.runTaskLaterAsynchronously(javaPlugin, tickWait);
+        }.runTaskLater(javaPlugin, tickWait);
 
         pendingTasks.put(username, task);
     }
