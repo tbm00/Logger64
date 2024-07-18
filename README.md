@@ -11,12 +11,14 @@ Created by tbm00 for play.mc64.wtf.
 ## Commands
 #### Admin Commands
 - `/logger` Display this command list
-- `/logger ip <IP>` Get IP's info chart
-- `/logger pl <player>` Get player's info chart
+- `/logger ip <IP>` Get IP's info table
+- `/logger user <username>` Get player's info table
+- `/logger seen <username>` Display player's join info
 
 ## Permissions
 #### Admin Permissions
-- `logger64.admin` Ability to use admin commands.
+- `logger64.admin` Ability to use table commands
+- `logger64.seen` Ability to use seen command
 
 ## Config
 ```
