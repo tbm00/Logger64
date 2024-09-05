@@ -6,7 +6,7 @@
 
     <groupId>dev.tbm00</groupId>
     <artifactId>Logger64</artifactId>
-    <version>0.0.1-beta</version>
+    <version>0.1.0-beta</version>
     <packaging>jar</packaging>
 
     <name>Logger64</name>
@@ -67,6 +67,12 @@
             <artifactId>spigot-api</artifactId>
             <version>1.18.1-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+            <version>5.1.0</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 </project>

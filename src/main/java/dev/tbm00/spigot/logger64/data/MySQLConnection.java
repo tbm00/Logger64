@@ -1,63 +1,75 @@
 package dev.tbm00.spigot.logger64.data;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class MySQLConnection {
-
-    private Connection connection;
+    private HikariDataSource dataSource;
     private JavaPlugin javaPlugin;
 
     public MySQLConnection(JavaPlugin javaPlugin) {
         this.javaPlugin = javaPlugin;
-        openConnection();
+        setupConnectionPool();
         initializeDatabase();
     }
 
-    public synchronized void openConnection() {
-        try {
-            String host = javaPlugin.getConfig().getString("database.host");
-            String port = javaPlugin.getConfig().getString("database.port");
-            String database = javaPlugin.getConfig().getString("database.database");
-            String username = javaPlugin.getConfig().getString("database.username");
-            String password = javaPlugin.getConfig().getString("database.password");
-            String options = javaPlugin.getConfig().getString("database.options");
-            this.connection = DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/" + database + options, username, password);
-            System.out.println("Connected MySQL database!");
-        } catch (SQLException e) {
-            System.out.println("Exception: Could not connect to the database...");
-            e.printStackTrace();
-        }
+    private void setupConnectionPool() {
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl("jdbc:mysql://" + javaPlugin.getConfig().getString("mysql.host") + 
+                        ":" + javaPlugin.getConfig().getInt("mysql.port") + 
+                        "/" + javaPlugin.getConfig().getString("mysql.database") +
+                        "?useSSL=" + javaPlugin.getConfig().getBoolean("mysql.useSSL", false));
+        config.setUsername(javaPlugin.getConfig().getString("mysql.username"));
+        config.setPassword(javaPlugin.getConfig().getString("mysql.password"));
+        config.addDataSourceProperty("cachePrepStmts", "true");
+        config.addDataSourceProperty("prepStmtCacheSize", "100");
+        config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+        config.setConnectionTimeout(30000); // 30 seconds
+        config.setIdleTimeout(600000); // 10 minutes
+        config.setMaxLifetime(1800000); // 30 minutes
+
+        dataSource = new HikariDataSource(config);
+        System.out.println("Finished setting up MySQL's Hikari connection pool.");
     }
 
-    public synchronized Connection getConnection() {
-        //openConnection();
-        return this.connection;
+    public Connection getConnection() throws SQLException {
+        return dataSource.getConnection();
     }
 
-    public synchronized void closeConnection() {
-        if (this.connection != null) {
-            try {
-                this.connection.close();
-                System.out.println("Disconnected database!");
-            } catch (SQLException e) {
-                System.out.println("Exception: Could not close the database connection...");
-                e.printStackTrace();
-            }
-        }
+    public void closeConnection() {
+        if (dataSource != null && !dataSource.isClosed())
+            dataSource.close();
     }
 
-    public void initializeDatabase() {
-        try (Statement statement = getConnection().createStatement()) {
-            String playerTable = "CREATE TABLE IF NOT EXISTS logger64_players (username VARCHAR(20) PRIMARY KEY, known_ips TEXT, first_ip VARCHAR(45), latest_ip VARCHAR(45), first_date DATE, latest_date DATE)";
-            String ipTable = "CREATE TABLE IF NOT EXISTS logger64_ips (ip VARCHAR(45) PRIMARY KEY, known_usernames TEXT, first_username VARCHAR(20), latest_username VARCHAR(20), first_date DATE, latest_date DATE)";
+    private void initializeDatabase() {
+        String playerTable = "CREATE TABLE IF NOT EXISTS logger64_players (" +
+                "username VARCHAR(20) PRIMARY KEY, " +
+                "known_ips TEXT, " +
+                "first_ip VARCHAR(45), " +
+                "latest_ip VARCHAR(45), " +
+                "first_date DATE, " +
+                "latest_date DATE)";
+
+        String ipTable = "CREATE TABLE IF NOT EXISTS logger64_ips (" +
+                "ip VARCHAR(45) PRIMARY KEY, " +
+                "known_usernames TEXT, " +
+                "first_username VARCHAR(20), " +
+                "latest_username VARCHAR(20), " +
+                "first_date DATE, " +
+                "latest_date DATE)";
+
+        try (Connection connection = getConnection();
+             Statement statement = connection.createStatement()) {
             statement.execute(playerTable);
             statement.execute(ipTable);
-            System.out.println("Initialized database!");
         } catch (SQLException e) {
-            System.out.println("Exception: Could not initialize the database...");
-            e.printStackTrace();
+            javaPlugin.getLogger().severe("Error initializing database: " + e.getMessage());
         }
     }
 }

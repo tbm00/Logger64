@@ -203,7 +203,6 @@ public class TableGenerator {
     }
    
     private class Row {
-       
         public List<String> texts = new ArrayList<>();
         public boolean empty = true;
        
@@ -227,12 +226,10 @@ public class TableGenerator {
     }
    
     public enum Receiver {
-       
         CONSOLE, CLIENT
     }
    
     public enum Alignment {
-       
         CENTER, LEFT, RIGHT
     }
 }

@@ -1,15 +1,14 @@
-database:
+mysql:
   host: 'host'
-  port: '3306'
+  port: 3306
   database: 'db'
   username: 'user'
   password: 'pass'
-  options: '?autoReconnect=true'
+  useSSL: false
 
 logger:
   enabled: true
-  ticksUntilConnectionLogged: 6000
-  nonLoggedIPs:
-  - 0.0.0.0
-  - 255.255.255.255
-  # Add more entries as needed.
+  ticksUntilConnectionLogged: 3600
+  nonLoggedIPs: []
+  #- 0.0.0.0
+  #- 255.255.255.255

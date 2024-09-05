@@ -40,11 +40,14 @@ public class LoggerCommand implements TabExecutor {
 
         switch (subCommand) {
             case "seen":
-                return handleSeenCommand(sender, args);
+                Bukkit.getScheduler().runTaskAsynchronously(Bukkit.getPluginManager().getPlugin("Logger64"), () -> handleSeenCommand(sender, args));
+                return true;
             case "ip":
-                return handleIPCommand(sender, args);
+                Bukkit.getScheduler().runTaskAsynchronously(Bukkit.getPluginManager().getPlugin("Logger64"), () -> handleIPCommand(sender, args));
+                return true;
             case "user":
-                return handleUserCommand(sender, args);
+                Bukkit.getScheduler().runTaskAsynchronously(Bukkit.getPluginManager().getPlugin("Logger64"), () -> handleUserCommand(sender, args));
+                return true;
             default:
                 sender.sendMessage(prefix + ChatColor.RED + "Unknown subcommand!");
                 return false;
@@ -202,40 +205,30 @@ public class LoggerCommand implements TabExecutor {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         List<String> list = new ArrayList<>();
         if (args.length == 1) {
-            list.clear();
             for (String n : subCommands) {
-                if (n!=null && n.startsWith(args[0])) {
+                if (n!=null && n.startsWith(args[0])) 
                     list.add(n);
-                }
             }
-            for (String n : subAdminCommands) {
-                if (n!=null && n.startsWith(args[0])) {
-                    if (sender.hasPermission("logger64.admin")) {
-                        list.add(n);
-                    }
+            if (sender.hasPermission("logger64.admin"))
+                for (String n : subAdminCommands) {
+                    if (n!=null && n.startsWith(args[0]))
+                            list.add(n);
                 }
-            }
         }
         if (args.length == 2) {
-            list.clear();
-            if ( args[0].equalsIgnoreCase("seen") ) {
-                if (sender.hasPermission("logger64.seen")) {
+            if (args[0].equalsIgnoreCase("seen"))
+                if (sender.hasPermission("logger64.seen"))
                     for (Player p : Bukkit.getOnlinePlayers()) {
-                        if (p!=null && p.getName().startsWith(args[1])) {
+                        if (p!=null && p.getName().startsWith(args[1]))
                             list.add(p.getName());
-                        }
                     }
-                }
-            } else if ( args[0].equalsIgnoreCase("user") ) {
-                if (sender.hasPermission("logger64.admin")) {
+            if (args[0].equalsIgnoreCase("user")) 
+                if (sender.hasPermission("logger64.admin")) 
                     for (Player p : Bukkit.getOnlinePlayers()) {
-                        if (p!=null && p.getName().startsWith(args[1])) {
+                        if (p!=null && p.getName().startsWith(args[1])) 
                             list.add(p.getName());
-                        }
                     }
-                }
-            }
         }
-        return list;
+        return list; 
     }
 }

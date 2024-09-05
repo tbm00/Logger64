@@ -22,15 +22,18 @@ Created by tbm00 for play.mc64.wtf.
 
 ## Config
 ```
-database:
+mysql:
   host: 'host'
-  port: '3306'
+  port: 3306
   database: 'db'
   username: 'user'
   password: 'pass'
-  options: '?autoReconnect=true'
+  useSSL: false
 
 logger:
   enabled: true
-  ticksUntilAuthorized: 36000
+  ticksUntilConnectionLogged: 3600
+  nonLoggedIPs: []
+  #- 0.0.0.0
+  #- 255.255.255.255
 ```

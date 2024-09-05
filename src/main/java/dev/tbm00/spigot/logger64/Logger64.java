@@ -6,7 +6,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import dev.tbm00.spigot.logger64.command.LoggerCommand;
 import dev.tbm00.spigot.logger64.data.MySQLConnection;
-import dev.tbm00.spigot.logger64.listener.PlayerJoinLeave;
+import dev.tbm00.spigot.logger64.listener.PlayerJoin;
 
 public class Logger64 extends JavaPlugin {
 
@@ -16,7 +16,7 @@ public class Logger64 extends JavaPlugin {
     @Override
     public void onEnable() {
         // Startup Message
-        final PluginDescriptionFile pdf = this.getDescription();
+        final PluginDescriptionFile pdf = getDescription();
 		log(
             ChatColor.DARK_PURPLE + "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-",
             pdf.getName() + " v" + pdf.getVersion() + " created by tbm00",
@@ -24,24 +24,31 @@ public class Logger64 extends JavaPlugin {
 		);
 
         // Load Config
-        this.saveDefaultConfig();
+        saveDefaultConfig();
 
         // Connect to MySQL
-        this.mysqlConnection = new MySQLConnection(this);
+        try {
+            mysqlConnection = new MySQLConnection(this);
+        } catch (Exception e) {
+            getLogger().severe("Failed to connect to MySQL. Disabling plugin.");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+
 
         // Connect LogManager
-        this.logManager = new LogManager(this.mysqlConnection);
+        logManager = new LogManager(mysqlConnection);
 
         // Register Listener
-        getServer().getPluginManager().registerEvents(new PlayerJoinLeave(this, this.logManager, this.mysqlConnection), this);
+        getServer().getPluginManager().registerEvents(new PlayerJoin(this, logManager), this);
 
         // Register Commands
-        getCommand("logger").setExecutor(new LoggerCommand(this.logManager));
+        getCommand("logger").setExecutor(new LoggerCommand(logManager));
     }
 
     @Override
     public void onDisable() {
-        this.mysqlConnection.closeConnection();
+        mysqlConnection.closeConnection();
     }
 
     public MySQLConnection getDatabase() {
