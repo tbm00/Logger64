@@ -29,6 +29,9 @@ mysql:
   username: 'user'
   password: 'pass'
   useSSL: false
+  hikari:
+    maximumPoolSize: 12
+    minimumPoolSize: 2
 
 logger:
   enabled: true

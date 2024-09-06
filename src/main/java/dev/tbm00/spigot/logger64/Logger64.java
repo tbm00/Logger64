@@ -37,7 +37,7 @@ public class Logger64 extends JavaPlugin {
 
 
         // Connect LogManager
-        logManager = new LogManager(mysqlConnection);
+        logManager = new LogManager(this, mysqlConnection);
 
         // Register Listener
         getServer().getPluginManager().registerEvents(new PlayerJoin(this, logManager), this);

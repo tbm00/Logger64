@@ -2,6 +2,9 @@ package dev.tbm00.spigot.logger64;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.bukkit.plugin.java.JavaPlugin;
+
 import java.sql.*;
 
 import dev.tbm00.spigot.logger64.data.MySQLConnection;
@@ -9,9 +12,11 @@ import dev.tbm00.spigot.logger64.model.PlayerEntry;
 import dev.tbm00.spigot.logger64.model.IPEntry;
 
 public class LogManager {
+    private final JavaPlugin javaPlugin;
     private final MySQLConnection db;
 
-    public LogManager(MySQLConnection db) {
+    public LogManager(JavaPlugin javaPlugin, MySQLConnection db) {
+        this.javaPlugin = javaPlugin;
         this.db = db;
     }
 
@@ -26,6 +31,7 @@ public class LogManager {
                 return rs.next();
             }
         } catch (SQLException e) {
+            javaPlugin.getLogger().severe("Exception when finding player entry: " + username);
             e.printStackTrace();
         }
         return false;
@@ -51,6 +57,7 @@ public class LogManager {
                 }
             }
         } catch (SQLException e) {
+            javaPlugin.getLogger().severe("Exception when getting player entry: " + username);
             e.printStackTrace();
         }
         return null;
@@ -92,7 +99,7 @@ public class LogManager {
             }
             statement.executeUpdate();
         } catch (SQLException e) {
-            System.out.println("Exception: Could not save player entry to SQL!");
+            javaPlugin.getLogger().severe("Exception when saving player entry: " + username);
             e.printStackTrace();
         }
     }
@@ -122,6 +129,7 @@ public class LogManager {
                 return rs.next();
             }
         } catch (SQLException e) {
+            javaPlugin.getLogger().severe("Exception when finding ip entry: " + ip);
             e.printStackTrace();
         }
         return false;
@@ -146,6 +154,7 @@ public class LogManager {
                 }
             }
         } catch (SQLException e) {
+            javaPlugin.getLogger().severe("Exception when getting ip entry: " + ip);
             e.printStackTrace();
         }
         return null;
@@ -188,6 +197,7 @@ public class LogManager {
 
             statement.executeUpdate();
         } catch (SQLException e) {
+            javaPlugin.getLogger().severe("Exception when saving ip entry: " + ip);
             e.printStackTrace();
         }
     }

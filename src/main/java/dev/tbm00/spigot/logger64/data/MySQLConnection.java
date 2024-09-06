@@ -33,9 +33,18 @@ public class MySQLConnection {
         config.setConnectionTimeout(30000); // 30 seconds
         config.setIdleTimeout(600000); // 10 minutes
         config.setMaxLifetime(1800000); // 30 minutes
+        config.setMaximumPoolSize(javaPlugin.getConfig().getInt("mysql.hikari.maximumPoolSize"));
+        config.setMinimumIdle(javaPlugin.getConfig().getInt("mysql.hikari.minimumPoolSize"));
 
         dataSource = new HikariDataSource(config);
-        System.out.println("Finished setting up MySQL's Hikari connection pool.");
+        javaPlugin.getLogger().info("Initialized Hikari connection pool.");
+
+        try (Connection connection = getConnection()) {
+            if (connection.isValid(2))
+                javaPlugin.getLogger().info("MySQL database connection is valid!");
+        } catch (SQLException e) {
+            javaPlugin.getLogger().severe("Failed to establish connection to MySQL database: " + e.getMessage());
+        }
     }
 
     public Connection getConnection() throws SQLException {
