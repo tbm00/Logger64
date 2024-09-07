@@ -67,18 +67,19 @@ public class LogManager {
     // updates player entry in sql if it does exist
     @SuppressWarnings("all")
     public void savePlayerEntry(PlayerEntry playerEntry, String ip, String username, java.util.Date date) {
-        boolean exists = (playerEntry!=null) ? true : false;
+        boolean exists = (playerEntry != null);
         //boolean exists = playerEntryExists(username);
 
-        List<String> knownIPs = new ArrayList<>();
+        List<String> knownIPs;
         String query;
 
         if (exists) {
             query = "UPDATE logger64_players SET known_ips = ?, latest_ip = ?, latest_date = ? WHERE username = ?";
-            knownIPs = playerEntry.getKnownIPs();
+            knownIPs = new ArrayList<>(playerEntry.getKnownIPs());
             if (!knownIPs.contains(ip)) knownIPs.add(ip);
         } else {
             query = "INSERT INTO logger64_players (username, known_ips, first_ip, latest_ip, first_date, latest_date) VALUES (?, ?, ?, ?, ?, ?)";
+            knownIPs = new ArrayList<>();
             knownIPs.add(ip);
         }
 
@@ -164,18 +165,19 @@ public class LogManager {
     // updates ip entry in sql if it does exist
     @SuppressWarnings("all")
     public void saveIPEntry(IPEntry ipEntry, String ip, String username, java.util.Date date) {
-        boolean exists = (ipEntry!=null) ? true : false;
+        boolean exists = (ipEntry != null);
         //boolean exists = IPEntryExists(ip);
         
-        List<String> knownUsernames = new ArrayList<>();
+        List<String> knownUsernames;
         String query;
         
         if (exists) {
             query = "UPDATE logger64_ips SET known_usernames = ?, latest_username = ?, latest_date = ? WHERE ip = ?";
-            knownUsernames = ipEntry.getKnownUsernames();
+            knownUsernames = new ArrayList<>(ipEntry.getKnownUsernames());
             if (!knownUsernames.contains(username)) knownUsernames.add(username);
         } else {
             query = "INSERT INTO logger64_ips (ip, known_usernames, first_username, latest_username, first_date, latest_date) VALUES (?, ?, ?, ?, ?, ?)";
+            knownUsernames = new ArrayList<>();
             knownUsernames.add(username);
         }
         

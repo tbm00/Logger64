@@ -30,8 +30,14 @@ mysql:
   password: 'pass'
   useSSL: false
   hikari:
-    maximumPoolSize: 12
+    maximumPoolSize: 16
     minimumPoolSize: 2
+    idleTimeout: 240 # 4 minutes
+    connectionTimeout: 30 # 30 seconds
+    maxLifetime: 1800 # 30 minutes
+    leakDetection:
+      enabled: false
+      threshold: 2 # 2 seconds
 
 logger:
   enabled: true
