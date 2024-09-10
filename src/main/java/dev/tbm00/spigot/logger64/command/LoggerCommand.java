@@ -201,34 +201,45 @@ public class LoggerCommand implements TabExecutor {
         }
     }
 
-    @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         List<String> list = new ArrayList<>();
+        
         if (args.length == 1) {
             for (String n : subCommands) {
-                if (n!=null && n.startsWith(args[0])) 
+                if (n != null && n.startsWith(args[0])) {
                     list.add(n);
-            }
-            if (sender.hasPermission("logger64.admin"))
-                for (String n : subAdminCommands) {
-                    if (n!=null && n.startsWith(args[0]))
-                            list.add(n);
                 }
+            }
+            if (sender.hasPermission("logger64.admin")) {
+                for (String n : subAdminCommands) {
+                    if (n != null && n.startsWith(args[0])) {
+                        list.add(n);
+                    }
+                }
+            }
         }
+        
         if (args.length == 2) {
-            if (args[0].equalsIgnoreCase("seen"))
-                if (sender.hasPermission("logger64.seen"))
+            if (args[0].equalsIgnoreCase("seen")) {
+                if (sender.hasPermission("logger64.seen")) {
                     for (Player p : Bukkit.getOnlinePlayers()) {
-                        if (p!=null && p.getName().startsWith(args[1]))
+                        if (p != null && p.getName().startsWith(args[1])) {
                             list.add(p.getName());
+                        }
                     }
-            if (args[0].equalsIgnoreCase("user")) 
-                if (sender.hasPermission("logger64.admin")) 
+                }
+            }
+            if (args[0].equalsIgnoreCase("user")) {
+                if (sender.hasPermission("logger64.admin")) {
                     for (Player p : Bukkit.getOnlinePlayers()) {
-                        if (p!=null && p.getName().startsWith(args[1])) 
+                        if (p != null && p.getName().startsWith(args[1])) {
                             list.add(p.getName());
+                        }
                     }
+                }
+            }
         }
+        
         return list; 
     }
 }
