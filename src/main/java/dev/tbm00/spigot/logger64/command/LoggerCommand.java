@@ -214,18 +214,19 @@ public class LoggerCommand implements TabExecutor {
             String targetCIDR = args[1]; // comes in the form of "X.X.X.X/X", i.e. "158.15.0.0/16" or "158.15.7.0/24"
             if (targetCIDR != null) {
                 // IPs table
-                TableGenerator tg2 = new TableGenerator(Alignment.LEFT, Alignment.LEFT, Alignment.LEFT);
+                TableGenerator tg = new TableGenerator(Alignment.LEFT, Alignment.LEFT, Alignment.LEFT);
+                tg.addRow(" ----", "§4Associated to §6" + targetCIDR + "§r", "---- ");
                 List<String> knownIPs = logManager.getKnownIPsByCidr(targetCIDR);
                 if (knownIPs == null) {
                     sender.sendMessage(prefix + ChatColor.RED + "Could not getKnownIPsByCidr!");
                     return false;
                 }
-                tg2.addRow("§cIP§r", "§cFirstUser§r", "§cLatestUser§r");
+                tg.addRow("§cIP§r", "§cFirstUser, LatestUser§r", "§cLatestDate§r");
                 for(String ip : knownIPs) {
                     IPEntry targetIP = logManager.getIPEntry(ip);
-                    tg2.addRow("§7" + ip, "§7" + targetIP.getfirstUsername(), "§7" + targetIP.getlatestUsername());
+                    tg.addRow("§7" + ip, "§7" + targetIP.getfirstUsername() + ", " + targetIP.getlatestUsername(), "§7" + targetIP.getLatestDate());
                 }
-                for (String line : tg2.generate(Receiver.CLIENT, true, true)) {
+                for (String line : tg.generate(Receiver.CLIENT, true, true)) {
                     sender.sendMessage(line);
                 }
 

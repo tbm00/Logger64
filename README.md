@@ -23,8 +23,8 @@ Created by tbm00 for play.mc64.wtf. Highly recommended for cracked/offline serve
 - `/logger cidr <network>/<prefix>` Get table of IPs on CIDR block
 
 ### Permissions
-- `logger64.seen` Ability to use seen command
-- `logger64.admin` Ability to use other commands
+- `logger64.seen` Ability to use seen command *(Default: OP)*
+- `logger64.admin` Ability to use other commands *(Default: OP)*
 
 ## Default Config
 ```
