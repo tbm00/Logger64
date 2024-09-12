@@ -22,7 +22,7 @@ import dev.tbm00.spigot.logger64.model.TableGenerator.Receiver;
 public class LoggerCommand implements TabExecutor {
     private final LogManager logManager;
     private final String[] subCommands = new String[]{"seen"};
-    private final String[] subAdminCommands = new String[]{"user", "ip"};
+    private final String[] subAdminCommands = new String[]{"user", "ip", "cidr"};
     private final String prefix = ChatColor.DARK_GRAY + "[" + ChatColor.WHITE + "Logger" + ChatColor.DARK_GRAY + "] " + ChatColor.RESET;
 
     public LoggerCommand(LogManager logManager) {
@@ -47,6 +47,9 @@ public class LoggerCommand implements TabExecutor {
                 return true;
             case "user":
                 Bukkit.getScheduler().runTaskAsynchronously(Bukkit.getPluginManager().getPlugin("Logger64"), () -> handleUserCommand(sender, args));
+                return true;
+            case "cidr":
+                Bukkit.getScheduler().runTaskAsynchronously(Bukkit.getPluginManager().getPlugin("Logger64"), () -> handleCidrCommand(sender, args));
                 return true;
             default:
                 sender.sendMessage(prefix + ChatColor.RED + "Unknown subcommand!");
@@ -197,6 +200,43 @@ public class LoggerCommand implements TabExecutor {
             }
         } else {
             sender.sendMessage(prefix + ChatColor.GRAY + "Usage: /logger ip <IP>");
+            return false;
+        }
+    }
+
+    private boolean handleCidrCommand(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("logger64.admin")) {
+            sender.sendMessage(prefix + ChatColor.RED + "No permission!");
+            return false;
+        }
+
+        if (args.length == 2) {
+            String targetCIDR = args[1]; // comes in the form of "X.X.X.X/X", i.e. "158.15.0.0/16" or "158.15.7.0/24"
+            if (targetCIDR != null) {
+                // IPs table
+                TableGenerator tg2 = new TableGenerator(Alignment.LEFT, Alignment.LEFT, Alignment.LEFT);
+                List<String> knownIPs = logManager.getKnownIPsByCidr(targetCIDR);
+                if (knownIPs == null) {
+                    sender.sendMessage(prefix + ChatColor.RED + "Could not getKnownIPsByCidr!");
+                    return false;
+                }
+                tg2.addRow("§cIP§r", "§cFirstUser§r", "§cLatestUser§r");
+                for(String ip : knownIPs) {
+                    IPEntry targetIP = logManager.getIPEntry(ip);
+                    tg2.addRow("§7" + ip, "§7" + targetIP.getfirstUsername(), "§7" + targetIP.getlatestUsername());
+                }
+                for (String line : tg2.generate(Receiver.CLIENT, true, true)) {
+                    sender.sendMessage(line);
+                }
+
+                sender.sendMessage("\n");
+                return true;
+            } else {
+                sender.sendMessage(prefix + ChatColor.RED + "Could not read CIDR block!");
+                return false;
+            }
+        } else {
+            sender.sendMessage(prefix + ChatColor.GRAY + "Usage: /logger cidr <network>/<prefix>");
             return false;
         }
     }
