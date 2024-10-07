@@ -160,7 +160,7 @@ public class LogManager {
         String upperBound = convertBigIntegerToIp(broadcastAddress);
     
         // query sql for in-bounds ips
-        String query = "SELECT ip FROM logger64_ips WHERE ip BETWEEN ? AND ?";
+        String query = "SELECT ip FROM logger64_ips WHERE INET_ATON(ip) BETWEEN INET_ATON(?) AND INET_ATON(?)";
         List<String> matchedIPs = new ArrayList<>();
     
         try (Connection connection = db.getConnection();
@@ -178,8 +178,7 @@ public class LogManager {
             e.printStackTrace();
         }
 
-        if (matchedIPs.isEmpty()) return null;
-        return matchedIPs;
+        return matchedIPs.isEmpty() ? null : matchedIPs;
     }
 
     private String convertBigIntegerToIp(BigInteger ip) {

@@ -28,7 +28,7 @@ Created by tbm00 for play.mc64.wtf. Highly recommended for cracked/offline serve
 
 ## Default Config
 ```
-# Logger64 v0.1.4-beta by @tbm00
+# Logger64 v0.1.5-beta by @tbm00
 
 mysql:
   host: 'host'
