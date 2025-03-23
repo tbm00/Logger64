@@ -65,6 +65,26 @@ public class LogManager {
         return null;
     }
 
+    // returns player's last join date from sql
+    // if not found, returns null
+    public Date getLastSeen(String username) {
+        String query = "SELECT * FROM logger64_players WHERE username = ?";
+        
+        try (Connection connection = db.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, username);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getDate("latest_date");
+                }
+            }
+        } catch (SQLException e) {
+            javaPlugin.getLogger().severe("Exception when getting player entry: " + username);
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     // creates player entry in sql if DNE
     // updates player entry in sql if it does exist
     @SuppressWarnings("all")

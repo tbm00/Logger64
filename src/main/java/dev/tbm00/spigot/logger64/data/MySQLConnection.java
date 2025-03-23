@@ -12,15 +12,18 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class MySQLConnection {
     private HikariDataSource dataSource;
     private JavaPlugin javaPlugin;
+    private HikariConfig config;
 
     public MySQLConnection(JavaPlugin javaPlugin) {
         this.javaPlugin = javaPlugin;
+        
+        loadSQLConfig();
         setupConnectionPool();
         initializeDatabase();
     }
 
-    private void setupConnectionPool() {
-        HikariConfig config = new HikariConfig();
+    private void loadSQLConfig() {
+        config = new HikariConfig();
         config.setJdbcUrl("jdbc:mysql://" + javaPlugin.getConfig().getString("mysql.host") + 
                         ":" + javaPlugin.getConfig().getInt("mysql.port") + 
                         "/" + javaPlugin.getConfig().getString("mysql.database") +
@@ -37,7 +40,9 @@ public class MySQLConnection {
         config.setMaxLifetime(javaPlugin.getConfig().getInt("mysql.hikari.maxLifetime")*1000);
         if (javaPlugin.getConfig().getBoolean("mysql.hikari.leakDetection.enabled"))
             config.setLeakDetectionThreshold(javaPlugin.getConfig().getInt("mysql.hikari.leakDetection.threshold")*1000);
+    }
 
+    private void setupConnectionPool() {
         dataSource = new HikariDataSource(config);
         javaPlugin.getLogger().info("Initialized Hikari connection pool.");
 
