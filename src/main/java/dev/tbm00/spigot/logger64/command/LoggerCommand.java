@@ -4,6 +4,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -120,11 +122,15 @@ public class LoggerCommand implements TabExecutor {
 
                 // IPs table
                 TableGenerator tg2 = new TableGenerator(Alignment.LEFT, Alignment.LEFT, Alignment.LEFT);
-                List<String> knownIPs = logManager.getKnownIPs(targetName);
-                if (knownIPs == null) {
+                List<String> unsortedKnownIPs = logManager.getKnownIPs(targetName);
+                if (unsortedKnownIPs == null) {
                     sender.sendMessage(prefix + ChatColor.RED + "Error: logManager.getKnownIPs(targetName) returned null\n");
                     return false;
                 }
+
+                // Sort IPs
+                List<String> knownIPs = new ArrayList<>(unsortedKnownIPs);
+                sortIps(knownIPs);
 
                 tg2.addRow("§cIP§r", "§cFirstUser§r", "§cLatestUser§r");
                 for(String ip : knownIPs) {
@@ -195,11 +201,15 @@ public class LoggerCommand implements TabExecutor {
 
                 // Users table
                 TableGenerator tg2 = new TableGenerator(Alignment.LEFT, Alignment.LEFT, Alignment.LEFT);
-                List<String> knownNames = logManager.getKnownUsernames(targetIP);
-                if (knownNames == null) {
+                List<String> unsortedKnownNames = logManager.getKnownUsernames(targetIP);
+                if (unsortedKnownNames == null) {
                     sender.sendMessage(prefix + ChatColor.RED + "Error: logManager.getKnownUsernames(targetIP) returned null\n");
                     return false;
                 }
+
+                // Sort Names
+                List<String> knownNames = new ArrayList<>(unsortedKnownNames);
+                Collections.sort(knownNames);
 
                 tg2.addRow("§cUser§r", "§cFirstIP§r", "§cLatestIP§r");
                 for(String name : knownNames) {
@@ -248,11 +258,15 @@ public class LoggerCommand implements TabExecutor {
 
                 // CIDR table
                 TableGenerator tg = new TableGenerator(Alignment.LEFT, Alignment.LEFT, Alignment.LEFT);
-                List<String> knownIPs = logManager.getKnownIPsByCidr(targetCIDR);
-                if (knownIPs == null) {
+                List<String> unsortedKnownIPs = logManager.getKnownIPsByCidr(targetCIDR);
+                if (unsortedKnownIPs == null) {
                     sender.sendMessage(prefix + ChatColor.RED + "Error: logManager.getKnownIPsByCidr(targetCIDR) returned null\n");
                     return false;
                 }
+
+                // Sort IPs
+                List<String> knownIPs = new ArrayList<>(unsortedKnownIPs);
+                sortIps(knownIPs);
 
                 tg.addRow("§cIP§r", "§cLatestUser§r", "§cLatestDate§r");
                 for(String ip : knownIPs) {
@@ -281,6 +295,16 @@ public class LoggerCommand implements TabExecutor {
             sender.sendMessage(prefix + ChatColor.GRAY + "Usage: /logger cidr <network>/<prefix>");
             return false;
         }
+    }
+
+    private void sortIps(List<String> ips) {
+        ips.sort(Comparator.comparingLong(ip -> {
+            String[] octets = ip.split("\\.");
+            return (Long.parseLong(octets[0]) << 24)
+                 | (Long.parseLong(octets[1]) << 16)
+                 | (Long.parseLong(octets[2]) <<  8)
+                 |  Long.parseLong(octets[3]);
+        }));
     }
 
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
