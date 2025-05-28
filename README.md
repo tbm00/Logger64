@@ -14,6 +14,7 @@ Created by tbm00 for play.mc64.wtf. Highly recommended for cracked/offline serve
 - **Java 17+**: REQUIRED
 - **Spigot 1.18.1+**: UNTESTED ON OLDER VERSIONS
 - **MySQL**: REQUIRED
+- **AuthMe**: OPTIONAL
 
 ## Commands & Permissions
 ### Commands
@@ -28,7 +29,11 @@ Created by tbm00 for play.mc64.wtf. Highly recommended for cracked/offline serve
 
 ## Default Config
 ```
-# Logger64 v0.1.6-beta by @tbm00
+# Logger64 v0.1.7-beta by @tbm00
+# https://github.com/tbm00/Logger64
+
+hook:
+  AuthMe: true
 
 mysql:
   host: 'host'
@@ -49,7 +54,12 @@ mysql:
 
 logger:
   enabled: true
-  ticksUntilConnectionLogged: 3600
+  # logJoinEventMethod - When does the player's connection get logged?
+  # immediate: as soon as they join
+  # timer: after timerTicks, if they're still online
+  # authme: after authenticating via AuthMe
+  logJoinEventMethod: authme
+  timerTicks: 3600 # 3 minutes
   nonLoggedIPs: []
   #- 0.0.0.0
   #- 255.255.255.255

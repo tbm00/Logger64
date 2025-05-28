@@ -7,6 +7,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import dev.tbm00.spigot.logger64.command.LoggerCommand;
 import dev.tbm00.spigot.logger64.data.MySQLConnection;
 import dev.tbm00.spigot.logger64.listener.PlayerJoin;
+import dev.tbm00.spigot.logger64.listener.PlayerLogin;
 
 public class Logger64 extends JavaPlugin {
 
@@ -23,6 +24,8 @@ public class Logger64 extends JavaPlugin {
             ChatColor.DARK_PURPLE + "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-"
 		);
 
+        if (!setupHooks()) return;
+
         // Load Config
         saveDefaultConfig();
 
@@ -35,15 +38,33 @@ public class Logger64 extends JavaPlugin {
             return;
         }
 
-
         // Connect LogManager
         logManager = new LogManager(this, mysqlConnection);
 
         // Register Listener
-        getServer().getPluginManager().registerEvents(new PlayerJoin(this, logManager), this);
+        if (!getConfig().getString("logger.logJoinEventMethod", "timer").toLowerCase().equals("authme")) {
+            getServer().getPluginManager().registerEvents(new PlayerJoin(this, logManager), this);
+        } else {
+            getServer().getPluginManager().registerEvents(new PlayerLogin(this, logManager), this);
+        }
 
         // Register Commands
         getCommand("logger").setExecutor(new LoggerCommand(logManager));
+    }
+
+    private boolean setupHooks() {
+        if (getConfig().getBoolean("hook.AuthMe", false) && !setupAuthMe()) {
+            getLogger().severe("AuthMe hook failed -- disabling plugin!");
+            return false;
+        }
+        return true;
+    }
+
+    private boolean setupAuthMe() {
+        if (getServer().getPluginManager().getPlugin("AuthMe")==null) return false;
+        
+        log("AuthMe hooked.");
+        return true;
     }
 
     @Override
@@ -59,7 +80,7 @@ public class Logger64 extends JavaPlugin {
         return logManager;
     }
 
-    private void log(String... strings) {
+    public void log(String... strings) {
 		for (String s : strings)
             getServer().getConsoleSender().sendMessage(ChatColor.LIGHT_PURPLE + s);
 	}
