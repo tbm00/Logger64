@@ -29,6 +29,9 @@ public class Logger64 extends JavaPlugin {
         // Load Config
         saveDefaultConfig();
 
+        // Initialize Utils
+        StaticUtils.init(this);
+
         // Connect to MySQL
         try {
             mysqlConnection = new MySQLConnection(this);
@@ -41,10 +44,9 @@ public class Logger64 extends JavaPlugin {
         // Connect LogManager
         logManager = new LogManager(this, mysqlConnection);
 
-        // Register Listener
-        if (!getConfig().getString("logger.logJoinEventMethod", "timer").toLowerCase().equals("authme")) {
-            getServer().getPluginManager().registerEvents(new PlayerJoin(this, logManager), this);
-        } else {
+        // Register Listeners
+        getServer().getPluginManager().registerEvents(new PlayerJoin(this, logManager), this);
+        if (getConfig().getString("logger.logJoinEventMethod", "timer").toLowerCase().equals("authme")) {
             getServer().getPluginManager().registerEvents(new PlayerLogin(this, logManager), this);
         }
 

@@ -2,11 +2,13 @@ package dev.tbm00.spigot.logger64;
 
 import java.math.BigInteger;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.sql.*;
 
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import dev.tbm00.spigot.logger64.data.MySQLConnection;
@@ -16,10 +18,25 @@ import dev.tbm00.spigot.logger64.model.IPEntry;
 public class LogManager {
     private final JavaPlugin javaPlugin;
     private final MySQLConnection db;
+    public final Set<String> nonLoggedIPs;
 
     public LogManager(JavaPlugin javaPlugin, MySQLConnection db) {
         this.javaPlugin = javaPlugin;
         this.db = db;
+        this.nonLoggedIPs = new HashSet<>(javaPlugin.getConfig().getStringList("logger.nonLoggedIPs"));
+    }
+
+    public void logNewEntry(Player player) {
+        String username = player.getName();
+        String ip = player.getAddress().getAddress().getHostAddress();
+        if (nonLoggedIPs.contains(ip)) return;
+
+        PlayerEntry playerEntry = getPlayerEntry(username);
+        IPEntry ipEntry = getIPEntry(ip);
+        java.util.Date date = new java.util.Date();
+
+        savePlayerEntry(playerEntry, ip, username, date);
+        saveIPEntry(ipEntry, ip, username, date);
     }
 
     // returns if the player entry for username exists
@@ -165,39 +182,34 @@ public class LogManager {
     // if empty or DNE, returns null
     public List<String> getKnownIPsByCidr(String block) {
         // convert string block to usable data
-        String[] parts = block.split("/");
-        if (parts.length != 2) {
-            javaPlugin.getLogger().severe("Invalid CIDR block format: " + block);
-            return null;
-        }
-        
-        int prefixLength;
-        try {
-            prefixLength = Integer.parseInt(parts[1]);
-        } catch (NumberFormatException e) {
-            javaPlugin.getLogger().severe("Invalid CIDR prefix length: " + parts[1]);
-            return null;
-        }
+        InetAddress cidrAddress = StaticUtils.getCidrInetAddress(block);
+        if (cidrAddress == null) return null;
+        byte[] addressBytes = cidrAddress.getAddress();
 
-        String cidrIp = parts[0];
-        InetAddress inetAddress;
-        try {
-            inetAddress = InetAddress.getByName(cidrIp);
-        } catch (UnknownHostException e) {
-            javaPlugin.getLogger().severe("Invalid IP address: " + cidrIp);
+        Integer prefixLengthObj = StaticUtils.getCidrPrefixLength(block);
+        if (prefixLengthObj == null) return null;
+        int prefixLength = prefixLengthObj;
+        
+        if (addressBytes.length != 4) {
+            javaPlugin.getLogger().severe("Only IPv4 CIDR blocks are supported for SQL lookup: " + block);
+            return null;
+        } if (prefixLength < 0 || prefixLength > 32) {
+            javaPlugin.getLogger().severe("Invalid CIDR prefix length for IPv4: " + prefixLength + " (block: " + block + ")");
             return null;
         }
     
-        // get block upper and lower bound
-        byte[] addressBytes = inetAddress.getAddress();
         BigInteger ipValue = new BigInteger(1, addressBytes);
         BigInteger mask = BigInteger.valueOf(-1).shiftLeft(32 - prefixLength); // Assuming IPv4 here
     
         BigInteger networkAddress = ipValue.and(mask);
         BigInteger broadcastAddress = networkAddress.add(mask.not());
     
-        String lowerBound = convertBigIntegerToIp(networkAddress);
-        String upperBound = convertBigIntegerToIp(broadcastAddress);
+        String lowerBound = StaticUtils.convertBigIntegerToIp(networkAddress);
+        String upperBound = StaticUtils.convertBigIntegerToIp(broadcastAddress);
+        if (lowerBound == null || upperBound == null) {
+            javaPlugin.getLogger().severe("Failed to compute IP bounds for CIDR: " + block);
+            return null;
+        }
     
         // query sql for in-bounds ips
         String query = "SELECT ip FROM logger64_ips WHERE INET_ATON(ip) BETWEEN INET_ATON(?) AND INET_ATON(?)";
@@ -219,24 +231,6 @@ public class LogManager {
         }
 
         return matchedIPs.isEmpty() ? null : matchedIPs;
-    }
-
-    private String convertBigIntegerToIp(BigInteger ip) {
-        byte[] bytes = ip.toByteArray();
-        // ensure 4 bytes for IPv4 (pad with leading zeroes if necessary)
-        if (bytes.length > 4) {
-            bytes = java.util.Arrays.copyOfRange(bytes, bytes.length - 4, bytes.length);
-        } else if (bytes.length < 4) {
-            byte[] paddedBytes = new byte[4];
-            System.arraycopy(bytes, 0, paddedBytes, 4 - bytes.length, bytes.length);
-            bytes = paddedBytes;
-        }
-    
-        try {
-            return InetAddress.getByAddress(bytes).getHostAddress();
-        } catch (UnknownHostException e) {
-            return null;
-        }
     }
 
     // returns if the ip entry for ip exists

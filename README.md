@@ -9,6 +9,7 @@ Created by tbm00 for play.mc64.wtf. Highly recommended for cracked/offline serve
 - **Simple Yet Powerful** Easy to use commands allow for admins to quickly find players on the same network!
 - **Configuable Save Delay** To ensure the player is authenticated before saving the IP & player entries.
 - **Asynchronous MySQL** With configurable Hikari Connection Pool options.
+- **Powerful Blacklist** Blacklist IP ranges (either for everyone, or for only unseen/unregistered players)
 
 ## Dependencies
 - **Java 17+**: REQUIRED
@@ -28,8 +29,7 @@ Created by tbm00 for play.mc64.wtf. Highly recommended for cracked/offline serve
 - `logger64.admin` Ability to use other commands *(Default: OP)*
 
 ## Default Config
-```
-# Logger64 v0.1.8-beta by @tbm00
+```# Logger64 v0.1.9-beta by @tbm00
 # https://github.com/tbm00/Logger64
 
 hook:
@@ -63,4 +63,9 @@ logger:
   nonLoggedIPs: []
   #- 0.0.0.0
   #- 255.255.255.255
+
+protection:
+  playerWhitelist: []
+  cidrBlacklistAll: []
+  cidrBlacklistUnseen: []
 ```

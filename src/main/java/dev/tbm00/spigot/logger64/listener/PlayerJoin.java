@@ -1,81 +1,121 @@
 package dev.tbm00.spigot.logger64.listener;
 
-import java.util.Date;
-import java.util.List;
+import java.net.InetSocketAddress;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitScheduler;
+
+import fr.xephi.authme.api.v3.AuthMeApi;
 
 import dev.tbm00.spigot.logger64.LogManager;
 import dev.tbm00.spigot.logger64.Logger64;
-import dev.tbm00.spigot.logger64.model.PlayerEntry;
-import dev.tbm00.spigot.logger64.model.IPEntry;
+import dev.tbm00.spigot.logger64.StaticUtils;
 
 public class PlayerJoin implements Listener {
     private Logger64 javaPlugin;
     private final LogManager logManager;
-    private final boolean enabled;
+
+    private final boolean logJoinEnabled;
     private final String method;
     private final int tickDelay;
-    private final List<String> nonLoggedIPs;
+
+    private final Set<UUID> playerWhitelist;
+    private final Set<String> cidrBlacklistAll;
+    private final Set<String> cidrBlacklistUnseen;
+    private final boolean authmeEnabled;
 
     public PlayerJoin(Logger64 javaPlugin, LogManager logManager) {
         this.javaPlugin = javaPlugin;
         this.logManager = logManager;
         this.method = javaPlugin.getConfig().getString("logger.logJoinEventMethod", "timer").toLowerCase();
-        if (this.method.equals("authme")) this.enabled = false;
-        else this.enabled = javaPlugin.getConfig().getBoolean("logger.enabled", true);
+
+        if (this.method.equals("authme")) this.logJoinEnabled = false;
+        else this.logJoinEnabled = javaPlugin.getConfig().getBoolean("logger.enabled", true);
+
         this.tickDelay = javaPlugin.getConfig().getInt("logger.timerTicks", 3600);
-        this.nonLoggedIPs = javaPlugin.getConfig().getStringList("logger.nonLoggedIPs");
+        
+        this.playerWhitelist = new HashSet<>(javaPlugin.getConfig().getStringList("protection.playerWhitelist").stream().map(s -> {
+                                    try {
+                                        return UUID.fromString(s);
+                                    } catch (IllegalArgumentException e) {
+                                        javaPlugin.getLogger().warning("Invalid UUID in protection.playerWhitelist: " + s);
+                                        return null;
+                                    }}).filter(Objects::nonNull).collect(Collectors.toList()));
+        this.cidrBlacklistAll = new HashSet<>(javaPlugin.getConfig().getStringList("protection.cidrBlacklistAll"));
+        this.cidrBlacklistUnseen = new HashSet<>(javaPlugin.getConfig().getStringList("protection.cidrBlacklistUnseen"));
+        this.authmeEnabled = javaPlugin.getConfig().getBoolean("hook.AuthMe", false);
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOWEST)
     public void onPlayerJoin(PlayerJoinEvent event) {
-        // check if enabled
-        if (!enabled) return;
+        Player player = event.getPlayer();
 
-        // check non logged ips
-        String ip = event.getPlayer().getAddress().getAddress().getHostAddress();
-        if (nonLoggedIPs.contains(ip)) return;
+        if (isPlayerAllowedIn(player)) {
+            if (logJoinEnabled) logPlayerJoin(player);
+        } else {
+            player.kickPlayer("Network restricted!");
+            javaPlugin.log("Kicked "+player.getName()+" on join -- network restricted..: "+player.getAddress().getAddress().getHostAddress());
+        }
+    }
 
-        String username = event.getPlayer().getName();
-
+    public void logPlayerJoin(Player player) {
         switch (method) {
             case "immediate": {
-                if (!event.getPlayer().isOnline()) return;
-                else {
-                    PlayerEntry playerEntry = logManager.getPlayerEntry(username);
-                    IPEntry ipEntry = logManager.getIPEntry(ip);
-                    Date date = new Date();
-
-                    logManager.savePlayerEntry(playerEntry, ip, username, date);
-                    logManager.saveIPEntry(ipEntry, ip, username, date);
-                }
+                if (player.isOnline()) logManager.logNewEntry(player);
                 return;
             }
             case "timer": {
                 BukkitScheduler scheduler = javaPlugin.getServer().getScheduler();
                 scheduler.runTaskLaterAsynchronously(javaPlugin, () -> {
-                    if (!event.getPlayer().isOnline()) return;
-                    else {
-                        PlayerEntry playerEntry = logManager.getPlayerEntry(username);
-                        IPEntry ipEntry = logManager.getIPEntry(ip);
-                        Date date = new Date();
-
-                        logManager.savePlayerEntry(playerEntry, ip, username, date);
-                        logManager.saveIPEntry(ipEntry, ip, username, date);
-                    }
+                    if (player.isOnline()) logManager.logNewEntry(player);
                 }, tickDelay);
                 return;
             }
-            case "authme":
-                javaPlugin.log("No one should ever get this message!");
-                return;
             default:
-                javaPlugin.log("logJoinEventMethod '"+method+"' does not exist!");
+                javaPlugin.log("logJoinEventMethod '"+method+"' path does not exist in PlayerJoin.java!");
                 return;
         }
+    }
+
+    public boolean isPlayerAllowedIn(Player player) {
+        UUID uuid = player.getUniqueId();
+        if (playerWhitelist.contains(uuid)) return true;
+
+        InetSocketAddress addr = player.getAddress();
+        if (addr == null) {
+            javaPlugin.getLogger().warning("Player " + player.getName() + " has a NULL IP address..!");
+            return false;
+        }
+
+        String ip = addr.getAddress().getHostAddress();
+        if (StaticUtils.isIpInCidrBlocks(cidrBlacklistAll, ip)) return false;
+        if ((!player.hasPlayedBefore() || (authmeEnabled && !isPlayerRegisteredInAuthme(player))) 
+                                                    && StaticUtils.isIpInCidrBlocks(cidrBlacklistUnseen, ip)) { 
+            return false;
+        }
+
+        javaPlugin.log("player allowed to join!");
+        return true;
+    }
+
+    private boolean isPlayerRegisteredInAuthme(Player player) {
+        Plugin authMePlugin = javaPlugin.getServer().getPluginManager().getPlugin("AuthMe");
+        if (authMePlugin == null || !authMePlugin.isEnabled()) {
+            javaPlugin.getLogger().warning("AuthMe plugin not found or not enabled --- treating player as unregistered:" + player.getName());
+            return false;
+        }
+
+        AuthMeApi authMeApi = AuthMeApi.getInstance();
+        return authMeApi.isRegistered(player.getName());
     }
 }
