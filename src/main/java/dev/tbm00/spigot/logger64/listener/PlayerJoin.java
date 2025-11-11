@@ -64,7 +64,7 @@ public class PlayerJoin implements Listener {
             if (logJoinEnabled) logPlayerJoin(player);
         } else {
             player.kickPlayer("Network restricted!");
-            javaPlugin.log("Kicked "+player.getName()+" on join -- network restricted..: "+player.getAddress().getAddress().getHostAddress());
+            javaPlugin.log("Kicked "+player.getName()+" after join -- network restricted: "+player.getAddress().getAddress().getHostAddress());
         }
     }
 
@@ -103,8 +103,7 @@ public class PlayerJoin implements Listener {
                                                     && StaticUtils.isIpInCidrBlocks(cidrBlacklistUnseen, ip)) { 
             return false;
         }
-
-        javaPlugin.log("player allowed to join!");
+        
         return true;
     }
 
