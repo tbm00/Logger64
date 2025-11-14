@@ -23,13 +23,14 @@ Created by tbm00 for play.mc64.wtf. Highly recommended for cracked/offline serve
 - `/logger user <username>` Get player's info table
 - `/logger ip <IP>` Get IP's info table
 - `/logger cidr <network>/<prefix>` Get table of IPs on CIDR block
+- `/logger cidrp <username> [prefix]` Get table of IPs on each CIDR block player has used
 
 ### Permissions
 - `logger64.seen` Ability to use seen command *(Default: OP)*
 - `logger64.admin` Ability to use other commands *(Default: OP)*
 
 ## Default Config
-```# Logger64 v0.1.9-beta by @tbm00
+```# Logger64 v0.1.10-beta by @tbm00
 # https://github.com/tbm00/Logger64
 
 hook:
