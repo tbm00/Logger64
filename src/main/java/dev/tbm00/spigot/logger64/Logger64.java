@@ -6,9 +6,6 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import com.github.games647.fastlogin.bukkit.FastLoginBukkit;
-import com.github.games647.fastlogin.core.shared.FastLoginCore;
-
 import dev.tbm00.spigot.logger64.command.LoggerCommand;
 import dev.tbm00.spigot.logger64.data.MySQLConnection;
 import dev.tbm00.spigot.logger64.listener.PlayerJoin;
@@ -18,7 +15,6 @@ public class Logger64 extends JavaPlugin {
 
     private MySQLConnection mysqlConnection;
     private LogManager logManager;
-    public FastLoginBukkit fastLoginHook;
 
     @Override
     public void onEnable() {
@@ -97,16 +93,9 @@ public class Logger64 extends JavaPlugin {
             return false;
         }
 
-        if (fastloginp instanceof FastLoginBukkit) {
-            log(ChatColor.GREEN + "fastloginp type is FastLoginBukkit...");
+        /*if (fastloginp instanceof FastLoginBukkit) {
             fastLoginHook = (FastLoginBukkit) fastloginp;
-        } else if (fastloginp instanceof FastLoginCore) {
-            log(ChatColor.RED + "fastloginp type is FastLoginCore...");
-            return false;
-        } else {
-            log(ChatColor.RED + "fastloginp type not found...");
-            return false;
-        }
+        } */
 
         log("FastLogin hooked.");
         return true;

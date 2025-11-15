@@ -33,7 +33,7 @@ Created by tbm00 for play.mc64.wtf. Highly recommended for cracked/offline serve
 
 ## Default Config
 ```
-# Logger64 v0.1.12-beta by @tbm00
+# Logger64 v0.1.13-beta by @tbm00
 # https://github.com/tbm00/Logger64
 
 hook:

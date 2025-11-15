@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Set;
 import java.sql.*;
 
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import dev.tbm00.spigot.logger64.data.MySQLConnection;
@@ -26,17 +25,15 @@ public class LogManager {
         this.nonLoggedIPs = new HashSet<>(javaPlugin.getConfig().getStringList("logger.nonLoggedIPs"));
     }
 
-    public void logNewEntry(Player player) {
-        String username = player.getName();
-        String ip = player.getAddress().getAddress().getHostAddress();
-        if (nonLoggedIPs.contains(ip)) return;
+    public void logNewEntry(String username, String ipHostAddress) {
+        if (nonLoggedIPs.contains(ipHostAddress)) return;
 
         PlayerEntry playerEntry = getPlayerEntry(username);
-        IPEntry ipEntry = getIPEntry(ip);
+        IPEntry ipEntry = getIPEntry(ipHostAddress);
         java.util.Date date = new java.util.Date();
 
-        savePlayerEntry(playerEntry, ip, username, date);
-        saveIPEntry(ipEntry, ip, username, date);
+        savePlayerEntry(playerEntry, ipHostAddress, username, date);
+        saveIPEntry(ipEntry, ipHostAddress, username, date);
     }
 
     // returns if the player entry for username exists

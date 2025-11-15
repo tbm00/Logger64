@@ -23,6 +23,7 @@ public class PlayerLogin implements Listener {
 
     @EventHandler
     public void onPlayerLogin(LoginEvent event) {
-        if (logLoginEnabled) logManager.logNewEntry(event.getPlayer());
+        if (logLoginEnabled) logManager.logNewEntry(event.getPlayer().getName(), 
+                                                    event.getPlayer().getAddress().getAddress().getHostAddress());
     }
 }
