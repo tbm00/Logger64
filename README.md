@@ -10,12 +10,14 @@ Created by tbm00 for play.mc64.wtf. Highly recommended for cracked/offline serve
 - **Configuable Save Delay** To ensure the player is authenticated before saving the IP & player entries.
 - **Asynchronous MySQL** With configurable Hikari Connection Pool options.
 - **Powerful Blacklist** Blacklist IP ranges (either for everyone, or for only unseen/unregistered players)
+- **Easily Disable/Enable Cracked Registrations** Cracked servers can now temporarily/permanently disable new cracked registrations.
 
 ## Dependencies
 - **Java 17+**: REQUIRED
 - **Spigot 1.18.1+**: UNTESTED ON OLDER VERSIONS
 - **MySQL**: REQUIRED
 - **AuthMe**: OPTIONAL
+- **FastLogin**: OPTIONAL
 
 ## Commands & Permissions
 ### Commands
@@ -30,11 +32,13 @@ Created by tbm00 for play.mc64.wtf. Highly recommended for cracked/offline serve
 - `logger64.admin` Ability to use other commands *(Default: OP)*
 
 ## Default Config
-```# Logger64 v0.1.10-beta by @tbm00
+```
+# Logger64 v0.1.11-beta by @tbm00
 # https://github.com/tbm00/Logger64
 
 hook:
   AuthMe: true
+  FastLogin: true
 
 mysql:
   host: 'host'
@@ -66,6 +70,7 @@ logger:
   #- 255.255.255.255
 
 protection:
+  requirePremiumToRegister: false
   playerWhitelist: []
   cidrBlacklistAll: []
   cidrBlacklistUnseen: []

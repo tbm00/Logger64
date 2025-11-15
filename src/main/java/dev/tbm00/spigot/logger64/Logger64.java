@@ -1,8 +1,13 @@
 package dev.tbm00.spigot.logger64;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import com.github.games647.fastlogin.bukkit.FastLoginBukkit;
+import com.github.games647.fastlogin.core.shared.FastLoginCore;
 
 import dev.tbm00.spigot.logger64.command.LoggerCommand;
 import dev.tbm00.spigot.logger64.data.MySQLConnection;
@@ -13,6 +18,7 @@ public class Logger64 extends JavaPlugin {
 
     private MySQLConnection mysqlConnection;
     private LogManager logManager;
+    public FastLoginBukkit fastLoginHook;
 
     @Override
     public void onEnable() {
@@ -24,8 +30,10 @@ public class Logger64 extends JavaPlugin {
             ChatColor.DARK_PURPLE + "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-"
 		);
 
-        if (!setupHooks()) return;
-
+        if (!setupHooks()) {
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
         // Load Config
         saveDefaultConfig();
 
@@ -59,15 +67,55 @@ public class Logger64 extends JavaPlugin {
             getLogger().severe("AuthMe hook failed -- disabling plugin!");
             return false;
         }
+
+        if (getConfig().getBoolean("hook.FastLogin", false) && !setupFastLogin()) {
+            getLogger().severe("FastLogin hook failed -- disabling plugin!");
+            return false;
+        }
         return true;
     }
 
     private boolean setupAuthMe() {
-        if (getServer().getPluginManager().getPlugin("AuthMe")==null) return false;
+        if (!isPluginAvailable("AuthMe")) {
+            log(ChatColor.RED + "AuthMe not avaliable");
+            return false;
+        }
         
         log("AuthMe hooked.");
         return true;
     }
+
+    private boolean setupFastLogin() {
+        if (!isPluginAvailable("FastLogin")) {
+            log(ChatColor.RED + "FastLogin not avaliable");
+            return false;
+        }
+        
+        Plugin fastloginp = Bukkit.getPluginManager().getPlugin("FastLogin");
+        if (!fastloginp.isEnabled()) {
+            log(ChatColor.RED + "FastLogin not enabled");
+            return false;
+        }
+
+        if (fastloginp instanceof FastLoginBukkit) {
+            log(ChatColor.GREEN + "fastloginp type is FastLoginBukkit...");
+            fastLoginHook = (FastLoginBukkit) fastloginp;
+        } else if (fastloginp instanceof FastLoginCore) {
+            log(ChatColor.RED + "fastloginp type is FastLoginCore...");
+            return false;
+        } else {
+            log(ChatColor.RED + "fastloginp type not found...");
+            return false;
+        }
+
+        log("FastLogin hooked.");
+        return true;
+    }
+
+    private boolean isPluginAvailable(String pluginName) {
+		final Plugin plugin = getServer().getPluginManager().getPlugin(pluginName);
+		return plugin != null && plugin.isEnabled();
+	}
 
     @Override
     public void onDisable() {
