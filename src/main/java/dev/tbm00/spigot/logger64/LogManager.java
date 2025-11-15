@@ -230,7 +230,7 @@ public class LogManager {
             e.printStackTrace();
         }
 
-        return matchedIPs.isEmpty() ? null : matchedIPs;
+        return matchedIPs;
     }
 
     // returns if the ip entry for ip exists

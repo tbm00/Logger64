@@ -325,7 +325,7 @@ public class LoggerCommand implements TabExecutor {
         for(String name : knownNames) {
             if (name != null) {
                 PlayerEntry targetName = logManager.getPlayerEntry(name);
-                if (targetIP != null) {
+                if (targetName != null) {
                     tg2.addRow("§7" + name, "§7" + targetName.getFirstIP(), "§7" + targetName.getLatestIP());
                 } else {
                     tg2.addRow("§7§o" + name, "§7§oNULL", "§7§oNULL");
@@ -354,6 +354,9 @@ public class LoggerCommand implements TabExecutor {
         List<String> unsortedKnownIPs = logManager.getKnownIPsByCidr(targetCIDR);
         if (unsortedKnownIPs == null) {
             sender.sendMessage(prefix + ChatColor.RED + "Error: logManager.getKnownIPsByCidr(targetCIDR) returned null\n");
+            return false;
+        } else if (unsortedKnownIPs.isEmpty()) {
+            sender.sendMessage(prefix + ChatColor.RED + "No relevant IPs found\n");
             return false;
         }
 
@@ -384,10 +387,11 @@ public class LoggerCommand implements TabExecutor {
     private void sortIps(List<String> ips) {
         ips.sort(Comparator.comparingLong(ip -> {
             String[] octets = ip.split("\\.");
-            return (Long.parseLong(octets[0]) << 24)
-                 | (Long.parseLong(octets[1]) << 16)
-                 | (Long.parseLong(octets[2]) <<  8)
-                 |  Long.parseLong(octets[3]);
+            long value = (Long.parseLong(octets[0]) << 24)
+                   | (Long.parseLong(octets[1]) << 16)
+                   | (Long.parseLong(octets[2]) <<  8)
+                   |  Long.parseLong(octets[3]);
+            return value & 0xFFFFFFFFL; // unsigned
         }));
     }
 
