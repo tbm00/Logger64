@@ -26,7 +26,7 @@ public class Logger64 extends JavaPlugin {
             ChatColor.DARK_PURPLE + "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-"
 		);
 
-        if (!setupHooks()) {
+        if (!checkOnHooks()) {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
@@ -58,22 +58,33 @@ public class Logger64 extends JavaPlugin {
         getCommand("logger").setExecutor(new LoggerCommand(logManager));
     }
 
-    private boolean setupHooks() {
-        if (getConfig().getBoolean("hook.AuthMe", false) && !setupAuthMe()) {
+    private boolean checkOnHooks() {
+        if (getConfig().getBoolean("hook.AuthMe", false) && !checkOnAuthMe()) {
             getLogger().severe("AuthMe hook failed -- disabling plugin!");
             return false;
         }
 
-        if (getConfig().getBoolean("hook.FastLogin", false) && !setupFastLogin()) {
+        if (getConfig().getBoolean("hook.FastLogin", false) && !checkOnFastLogin()) {
             getLogger().severe("FastLogin hook failed -- disabling plugin!");
+            return false;
+        }
+
+        if (getConfig().getBoolean("hook.Floodgate", false) && !checkOnFloodgate()) {
+            getLogger().severe("Floodgate hook failed -- disabling plugin!");
             return false;
         }
         return true;
     }
 
-    private boolean setupAuthMe() {
+    private boolean checkOnAuthMe() {
         if (!isPluginAvailable("AuthMe")) {
             log(ChatColor.RED + "AuthMe not avaliable");
+            return false;
+        }
+
+        Plugin authmep = Bukkit.getPluginManager().getPlugin("AuthMe");
+        if (!authmep.isEnabled()) {
+            log(ChatColor.RED + "AuthMe not enabled");
             return false;
         }
         
@@ -81,7 +92,7 @@ public class Logger64 extends JavaPlugin {
         return true;
     }
 
-    private boolean setupFastLogin() {
+    private boolean checkOnFastLogin() {
         if (!isPluginAvailable("FastLogin")) {
             log(ChatColor.RED + "FastLogin not avaliable");
             return false;
@@ -93,11 +104,23 @@ public class Logger64 extends JavaPlugin {
             return false;
         }
 
-        /*if (fastloginp instanceof FastLoginBukkit) {
-            fastLoginHook = (FastLoginBukkit) fastloginp;
-        } */
-
         log("FastLogin hooked.");
+        return true;
+    }
+
+    private boolean checkOnFloodgate() {
+        if (!isPluginAvailable("Floodgate")) {
+            log(ChatColor.RED + "Floodgate not avaliable");
+            return false;
+        }
+        
+        Plugin floodgatep = Bukkit.getPluginManager().getPlugin("Floodgate");
+        if (!floodgatep.isEnabled()) {
+            log(ChatColor.RED + "Floodgate not enabled");
+            return false;
+        }
+
+        log("Floodgate hooked.");
         return true;
     }
 

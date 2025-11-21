@@ -1,9 +1,10 @@
-# Logger64 v0.1.13-beta by @tbm00
+# Logger64 v0.1.14-beta by @tbm00
 # https://github.com/tbm00/Logger64
 
 hook:
   AuthMe: true
   FastLogin: true
+  Floodgate: true
 
 mysql:
   host: 'host'
@@ -35,7 +36,8 @@ logger:
   #- 255.255.255.255
 
 protection:
-  requirePremiumToRegister: false # requires authme and fastlogin
+  requirePremiumToRegister: false # dont allow cracked registrations -- requires authme and fastlogin
+  allowBedrockToo: true # allow bedrock players to also register -- requires floodgate
   playerWhitelist: []
   cidrBlacklistAll: []
   cidrBlacklistUnseen: []

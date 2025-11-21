@@ -7,12 +7,15 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.bukkit.ChatColor;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import org.geysermc.floodgate.api.FloodgateApi;
 
 import fr.xephi.authme.api.v3.AuthMeApi;
 
@@ -31,10 +34,12 @@ public class PlayerJoin implements Listener {
     private final String method;
     private final int tickDelay;
 
-    private final boolean authmeEnabled;
-    private final boolean fastloginEnabled;
+    private boolean authmeEnabled;
+    private boolean fastloginEnabled;
+    private boolean floodgateEnabled;
 
-    private final boolean premiumRequired;
+    private boolean premiumRequired;
+    private boolean bedrockBypass;
 
     private final Set<UUID> playerWhitelist;
     private final Set<String> cidrBlacklistAll;
@@ -44,13 +49,35 @@ public class PlayerJoin implements Listener {
         this.javaPlugin = javaPlugin;
         this.logManager = logManager;
 
-        this.authmeEnabled = javaPlugin.getConfig().getBoolean("hook.AuthMe", false);
-        this.fastloginEnabled = javaPlugin.getConfig().getBoolean("hook.FastLogin", false);
-        
         this.method = javaPlugin.getConfig().getString("logger.logJoinEventMethod", "timer").toLowerCase();
         if (this.method.equals("authme")) this.logJoinEnabled = false;
         else this.logJoinEnabled = javaPlugin.getConfig().getBoolean("logger.enabled", true);
         this.tickDelay = javaPlugin.getConfig().getInt("logger.timerTicks", 3600);
+
+
+        authmeEnabled = javaPlugin.getConfig().getBoolean("hook.AuthMe", false) && isPluginAvailable("AuthMe");
+        fastloginEnabled = javaPlugin.getConfig().getBoolean("hook.FastLogin", false) && isPluginAvailable("FastLogin");
+        floodgateEnabled = javaPlugin.getConfig().getBoolean("hook.Floodgate", false) && isPluginAvailable("Floodgate");
+        
+        premiumRequired = javaPlugin.getConfig().getBoolean("protection.requirePremiumToRegister", false);
+        if (premiumRequired) {
+            if (!authmeEnabled) {
+                javaPlugin.getLogger().warning("AuthMe hook not enabled... disabling premium requirement!");
+                premiumRequired = false;
+            }
+            if (!fastloginEnabled) {
+                javaPlugin.getLogger().warning("FastLogin hook not enabled... disabling premium requirement!");
+                premiumRequired = false;
+            }
+        }
+        
+        bedrockBypass = premiumRequired && javaPlugin.getConfig().getBoolean("protection.allowBedrockToo", false);
+        if (bedrockBypass) {
+            if (!floodgateEnabled) {
+                javaPlugin.getLogger().warning("Floodgate hook not enabled... disabling bedrock bypass!");
+                bedrockBypass = false;
+            }
+        }
         
         this.playerWhitelist = new HashSet<>(javaPlugin.getConfig().getStringList("protection.playerWhitelist").stream().map(s -> {
                                     try {
@@ -61,7 +88,6 @@ public class PlayerJoin implements Listener {
                                     }}).filter(Objects::nonNull).collect(Collectors.toList()));
         this.cidrBlacklistAll = new HashSet<>(javaPlugin.getConfig().getStringList("protection.cidrBlacklistAll"));
         this.cidrBlacklistUnseen = new HashSet<>(javaPlugin.getConfig().getStringList("protection.cidrBlacklistUnseen"));
-        this.premiumRequired = fastloginEnabled && authmeEnabled && javaPlugin.getConfig().getBoolean("protection.requirePremiumToRegister", false);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -71,20 +97,41 @@ public class PlayerJoin implements Listener {
         String ipHostAddress = event.getPlayer().getAddress().getAddress().getHostAddress();
 
         if (!isPlayerAllowedInNetwork(username, uuid, ipHostAddress)) {
-            javaPlugin.getServer().getPlayer(uuid).kickPlayer(ChatColor.translateAlternateColorCodes('&',  "&cAccess Denied\n&eYou are connecting from a restricted network... &aGet support on our Discord: &adiscord.gg/acQjaAEBb9"));
-            javaPlugin.log("Kicked "+username+" on join -- restricted network: "+ipHostAddress);
-            return;
+            Player player = event.getPlayer();
+
+            if (player.isOnline()) {
+                player.kickPlayer(ChatColor.translateAlternateColorCodes('&',  "&cAccess Denied\n&eYou are connecting from a restricted network... &aGet support on our Discord: &adiscord.gg/acQjaAEBb9"));
+                javaPlugin.log("Kicked "+username+" on join -- restricted network: "+ipHostAddress);
+                return;
+            } else {
+                javaPlugin.log("Player "+username+" was offline on join -- not logging: "+ipHostAddress);
+                return;
+            }
         }
 
         javaPlugin.getServer().getScheduler().runTaskLater(javaPlugin, () -> {
-            if (premiumRequired && !isPlayerAllowedInMojang(username, uuid)) {
-                javaPlugin.getServer().getPlayer(uuid).kickPlayer(ChatColor.translateAlternateColorCodes('&',  "&cAccess Denied\n&eWe are currently NOT allowing new registrations from cracked/offline accounts... &aGet support on our Discord: &adiscord.gg/acQjaAEBb9"));
-                javaPlugin.log("Kicked "+username+" on join -- cracked player: "+ipHostAddress);
-                return;
+            if (premiumRequired) {
+                boolean isRegistered = isPlayerRegisteredInAuthme(username);
+                boolean isBedrock = bedrockBypass && isPlayerOnBedrock(uuid);
+
+                if (!isRegistered && !isBedrock) {
+                    if (!isPlayerPremium(username, uuid)) {
+                        Player player = javaPlugin.getServer().getPlayer(uuid);
+
+                        if (player!=null && player.isOnline()) {
+                            player.kickPlayer(ChatColor.translateAlternateColorCodes('&',  "&cAccess Denied\n&eWe are currently NOT allowing new registrations from cracked/offline accounts... &aGet support on our Discord: &adiscord.gg/acQjaAEBb9"));
+                            javaPlugin.log("Kicked "+username+" on join -- cracked player: "+ipHostAddress);
+                            return;
+                        } else {
+                            javaPlugin.log("Player "+username+" was null or offline shortly after join -- not logging: "+ipHostAddress);
+                            return;
+                        }
+                    }
+                }
             }
 
             if (logJoinEnabled) logPlayerJoin(username, uuid, ipHostAddress);
-        }, 25);
+        }, 40);
     }
 
     public void logPlayerJoin(String username, UUID uuid, String ipHostAddress) {
@@ -117,27 +164,26 @@ public class PlayerJoin implements Listener {
         return true;
     }
 
-    public boolean isPlayerAllowedInMojang(String username, UUID uuid) {
-        return isPlayerRegisteredInAuthme(username) || isPlayerPremium(username, uuid);
+    private boolean isPlayerOnBedrock(UUID uuid) {
+        return floodgateEnabled && FloodgateApi.getInstance().isFloodgatePlayer(uuid);
     }
 
     private boolean isPlayerRegisteredInAuthme(String username) {
-        Plugin authMePlugin = javaPlugin.getServer().getPluginManager().getPlugin("AuthMe");
-        if (authMePlugin == null || !authMePlugin.isEnabled()) {
-            javaPlugin.getLogger().warning("AuthMe plugin not found or not enabled --- treating "+username+" as unregistered!");
-            return false;
-        }
-
-        return AuthMeApi.getInstance().isRegistered(username);
+        return authmeEnabled && AuthMeApi.getInstance().isRegistered(username);
     }
 
     private boolean isPlayerPremium(String username, UUID uuid) {
-        PremiumStatus status = JavaPlugin.getPlugin(FastLoginBukkit.class).getStatus(uuid); 
+        return JavaPlugin.getPlugin(FastLoginBukkit.class).getStatus(uuid) == PremiumStatus.PREMIUM;
+    }
 
-        //if (status.equals(PremiumStatus.UNKNOWN)) javaPlugin.getLogger().warning("Unknown authentication status for "+username+"..!");
-        //if (status.equals(PremiumStatus.PREMIUM)) javaPlugin.getLogger().warning("Premium authentication status for "+username+"..!");
-        //if (status.equals(PremiumStatus.CRACKED)) javaPlugin.getLogger().warning("Cracked authentication status for "+username+"..!");
-
-        return status == PremiumStatus.PREMIUM;
+    private boolean isPluginAvailable(String pluginName) {
+        Plugin pl = javaPlugin.getServer().getPluginManager().getPlugin(pluginName);
+        if (pl == null) {
+            javaPlugin.getLogger().warning(pluginName+" plugin not found when expecting it!");
+            return false;
+        } else if (!pl.isEnabled()) {
+            javaPlugin.getLogger().warning(pluginName+" plugin not enabled when expecting it!");
+            return false;
+        } else return true;
     }
 }

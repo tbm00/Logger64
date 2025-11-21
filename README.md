@@ -18,6 +18,7 @@ Created by tbm00 for play.mc64.wtf. Highly recommended for cracked/offline serve
 - **MySQL**: REQUIRED
 - **AuthMe**: OPTIONAL
 - **FastLogin**: OPTIONAL
+- **Floodgate**: OPTIONAL
 
 ## Commands & Permissions
 ### Commands
@@ -33,12 +34,13 @@ Created by tbm00 for play.mc64.wtf. Highly recommended for cracked/offline serve
 
 ## Default Config
 ```
-# Logger64 v0.1.13-beta by @tbm00
+# Logger64 v0.1.14-beta by @tbm00
 # https://github.com/tbm00/Logger64
 
 hook:
   AuthMe: true
   FastLogin: true
+  Floodgate: true
 
 mysql:
   host: 'host'
@@ -70,7 +72,8 @@ logger:
   #- 255.255.255.255
 
 protection:
-  requirePremiumToRegister: false
+  requirePremiumToRegister: false # dont allow cracked registrations -- requires authme and fastlogin
+  allowBedrockToo: true # allow bedrock players to also register -- requires floodgate
   playerWhitelist: []
   cidrBlacklistAll: []
   cidrBlacklistUnseen: []

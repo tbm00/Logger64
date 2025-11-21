@@ -6,7 +6,7 @@
 
     <groupId>dev.tbm00</groupId>
     <artifactId>Logger64</artifactId>
-    <version>0.1.13-beta</version>
+    <version>0.1.14-beta</version>
     <packaging>jar</packaging>
 
     <name>Logger64</name>
@@ -63,6 +63,10 @@
             <id>codemc-repo</id>
             <url>https://repo.codemc.org/repository/maven-public/</url>
         </repository>
+        <repository>
+            <id>opencollab-snapshot</id>
+            <url>https://repo.opencollab.dev/main/</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -90,6 +94,12 @@
             <version>1.12-SNAPSHOT</version>
             <scope>system</scope>
             <systemPath>${project.basedir}/depend/FastLoginBukkit-tbm00.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>org.geysermc.floodgate</groupId>
+            <artifactId>api</artifactId>
+            <version>2.2.4-SNAPSHOT</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>
