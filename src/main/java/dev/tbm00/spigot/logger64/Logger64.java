@@ -55,7 +55,7 @@ public class Logger64 extends JavaPlugin {
         }
 
         // Register Commands
-        getCommand("logger").setExecutor(new LoggerCommand(logManager));
+        getCommand("logger").setExecutor(new LoggerCommand(this, logManager));
     }
 
     private boolean checkOnHooks() {

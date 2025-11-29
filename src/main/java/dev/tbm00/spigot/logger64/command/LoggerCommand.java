@@ -4,6 +4,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -13,10 +14,13 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 
 import dev.tbm00.spigot.logger64.LogManager;
+import dev.tbm00.spigot.logger64.Logger64;
+import dev.tbm00.spigot.logger64.listener.PlayerJoin;
 import dev.tbm00.spigot.logger64.model.PlayerEntry;
 import dev.tbm00.spigot.logger64.model.IPEntry;
 import dev.tbm00.spigot.logger64.model.TableGenerator;
@@ -24,12 +28,14 @@ import dev.tbm00.spigot.logger64.model.TableGenerator.Alignment;
 import dev.tbm00.spigot.logger64.model.TableGenerator.Receiver;
 
 public class LoggerCommand implements TabExecutor {
+    private final Logger64 javaPlugin;
     private final LogManager logManager;
     private final String[] subCommands = new String[]{"seen"};
     private final String[] subAdminCommands = new String[]{"user", "ip", "cidr", "cidrp"};
     private final String prefix = ChatColor.DARK_GRAY + "[" + ChatColor.WHITE + "Logger" + ChatColor.DARK_GRAY + "] " + ChatColor.RESET;
 
-    public LoggerCommand(LogManager logManager) {
+    public LoggerCommand(Logger64 javaPlugin, LogManager logManager) {
+        this.javaPlugin = javaPlugin;
         this.logManager = logManager;
     }
 
@@ -58,6 +64,8 @@ public class LoggerCommand implements TabExecutor {
             case "cidrp":
                 Bukkit.getScheduler().runTaskAsynchronously(Bukkit.getPluginManager().getPlugin("Logger64"), () -> handleCidrPlayerCommand(sender, args));
                 return true;
+            case "confirmreg":
+                return handleConfirmRegCommand(sender, args);
             default:
                 sender.sendMessage(prefix + ChatColor.RED + "Unknown subcommand!");
                 return false;
@@ -417,6 +425,49 @@ public class LoggerCommand implements TabExecutor {
             return o1 + "." + o2 + "." + o3 + "." + o4 + "/" + prefixLength;
         } catch (Exception e) {
             return null;
+        }
+    }
+
+    private boolean handleConfirmRegCommand(CommandSender sender, String[] args) {
+        if (!(sender instanceof ConsoleCommandSender)) {
+            sender.sendMessage(prefix + ChatColor.RED + "No permission!");
+            return false;
+        }
+
+        if (args.length==2) {
+            Player player = javaPlugin.getServer().getPlayer(args[1]);
+            
+            if (player==null) {
+                sender.sendMessage(prefix + ChatColor.AQUA + "Bad registration for "+args[1]+": null player -- forcefully unregistering..!");
+                javaPlugin.getServer().dispatchCommand(javaPlugin.getServer().getConsoleSender(), "authme unregister "+args[1]);
+                return true;
+            }
+            
+            String username = player.getName();
+            if (!player.isOnline()) {
+                sender.sendMessage(prefix + ChatColor.AQUA + "Bad registration for "+username+": not online -- forcefully unregistering..!");
+                javaPlugin.getServer().dispatchCommand(javaPlugin.getServer().getConsoleSender(), "authme unregister "+username);
+                return true;
+            }
+
+            sender.sendMessage(prefix + ChatColor.AQUA + "Checking new registration timing for "+username+"!");
+            UUID uuid = player.getUniqueId();
+            if (!PlayerJoin.isPlayerPremium(username, uuid) && PlayerJoin.getOnlineSeconds(uuid)<5) {
+                player.kickPlayer(ChatColor.translateAlternateColorCodes('&',  "&cAccess Denied\n&eYou registered too quickly... Please try again! &aGet support on our Discord: &adiscord.gg/acQjaAEBb9"));
+                javaPlugin.log("Kicked "+username+" after registering too quick!");
+                
+                sender.sendMessage(prefix + ChatColor.AQUA + "Bad registration for "+username+": bad timing -- forcefully unregistering..!");
+                javaPlugin.getServer().dispatchCommand(javaPlugin.getServer().getConsoleSender(), "authme unregister "+username);
+                return true;
+            }
+
+            sender.sendMessage(prefix + ChatColor.AQUA + "Solid registration for "+username+" -- running custom registration commands..!");
+            javaPlugin.getServer().dispatchCommand(javaPlugin.getServer().getConsoleSender(), "cmd aavpn-whitelist "+username);
+            javaPlugin.getServer().dispatchCommand(javaPlugin.getServer().getConsoleSender(), "cmd -d 300 newbie-msg-1 "+username);
+            return true;
+        } else {
+            sender.sendMessage(prefix + ChatColor.RED + "/logger confirmreg <player>");
+            return false;
         }
     }
 

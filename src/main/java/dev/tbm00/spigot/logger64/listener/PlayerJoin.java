@@ -1,9 +1,11 @@
 package dev.tbm00.spigot.logger64.listener;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.bukkit.ChatColor;
@@ -12,6 +14,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -44,6 +47,8 @@ public class PlayerJoin implements Listener {
     private final Set<UUID> playerWhitelist;
     private final Set<String> cidrBlacklistAll;
     private final Set<String> cidrBlacklistUnseen;
+
+    private static final Map<UUID, Long> sessionJoinTimes = new ConcurrentHashMap<>();
 
     public PlayerJoin(Logger64 javaPlugin, LogManager logManager) {
         this.javaPlugin = javaPlugin;
@@ -90,11 +95,20 @@ public class PlayerJoin implements Listener {
         this.cidrBlacklistUnseen = new HashSet<>(javaPlugin.getConfig().getStringList("protection.cidrBlacklistUnseen"));
     }
 
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        Player player = event.getPlayer();
+        sessionJoinTimes.remove(player.getUniqueId());
+    }
+
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerJoin(PlayerJoinEvent event) {
         String username = event.getPlayer().getName();
         UUID uuid = event.getPlayer().getUniqueId();
         String ipHostAddress = event.getPlayer().getAddress().getAddress().getHostAddress();
+
+        sessionJoinTimes.put(uuid, System.currentTimeMillis());
 
         if (!isPlayerAllowedInNetwork(username, uuid, ipHostAddress)) {
             Player player = event.getPlayer();
@@ -164,15 +178,15 @@ public class PlayerJoin implements Listener {
         return true;
     }
 
-    private boolean isPlayerOnBedrock(UUID uuid) {
+    public boolean isPlayerOnBedrock(UUID uuid) {
         return floodgateEnabled && FloodgateApi.getInstance().isFloodgatePlayer(uuid);
     }
 
-    private boolean isPlayerRegisteredInAuthme(String username) {
+    public boolean isPlayerRegisteredInAuthme(String username) {
         return authmeEnabled && AuthMeApi.getInstance().isRegistered(username);
     }
 
-    private boolean isPlayerPremium(String username, UUID uuid) {
+    public static boolean isPlayerPremium(String username, UUID uuid) {
         return JavaPlugin.getPlugin(FastLoginBukkit.class).getStatus(uuid) == PremiumStatus.PREMIUM;
     }
 
@@ -185,5 +199,13 @@ public class PlayerJoin implements Listener {
             javaPlugin.getLogger().warning(pluginName+" plugin not enabled when expecting it!");
             return false;
         } else return true;
+    }
+
+    public static long getOnlineSeconds(UUID playerUuid) {
+        Long joinedAt = sessionJoinTimes.get(playerUuid);
+        if (joinedAt == null) return 0L;
+        
+        long now = System.currentTimeMillis();
+        return (now - joinedAt) / 1000L;
     }
 }
